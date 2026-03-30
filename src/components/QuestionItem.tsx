@@ -26,11 +26,8 @@ const QuestionItem: React.FC<QuestionItemProps> = ({ question, isSelected, onCli
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        width: '100%',
-        textAlign: 'left',
+        width: '100%', textAlign: 'left',
         padding: '12px 16px',
-        borderTop: 'none',
-        borderRight: 'none',
         borderBottom: '1px solid var(--border-subtle)',
         borderLeft: `3px solid ${isSelected ? 'var(--accent)' : 'transparent'}`,
         background: isSelected ? 'var(--bg-active)' : hovered ? 'var(--bg-hover)' : 'transparent',
@@ -38,6 +35,9 @@ const QuestionItem: React.FC<QuestionItemProps> = ({ question, isSelected, onCli
         transition: 'all 0.12s ease',
         position: 'relative',
         display: 'block',
+        border: 'none',
+        // borderBottom: '1px solid var(--border-subtle)',
+        // borderLeft: `3px solid ${isSelected ? 'var(--accent)' : 'transparent'}`,
       }}
     >
       {/* Unread indicator */}
