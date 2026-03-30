@@ -13,7 +13,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
     setError(null);
     try {
       await onLogin();
-      // Redirect happens automatically via Supabase OAuth
     } catch (err: any) {
       setError(err.message ?? 'Sign-in failed. Please try again.');
       setLoading(false);
@@ -21,29 +20,83 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="relative z-10 h-screen flex items-center justify-center">
-      <div className="w-[380px] bg-zinc-900 border border-zinc-800 rounded-sm shadow-2xl shadow-black/60">
+    <div style={{
+      position: 'relative', zIndex: 10,
+      height: '100vh',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      {/* Ambient glow behind card */}
+      <div style={{
+        position: 'absolute',
+        width: 400, height: 400,
+        background: 'radial-gradient(circle, rgba(124,106,255,0.12) 0%, transparent 70%)',
+        borderRadius: '50%',
+        pointerEvents: 'none',
+      }} />
+
+      <div className="animate-pop-in" style={{
+        width: 380,
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-mid)',
+        borderRadius: 16,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
+        {/* Top gradient stripe */}
+        <div style={{
+          height: 3,
+          background: 'linear-gradient(90deg, var(--accent) 0%, #a78bfa 50%, #60a5fa 100%)',
+        }} />
 
         {/* Header */}
-        <div className="px-8 pt-8 pb-6 border-b border-zinc-800">
-          <div className="flex items-center gap-2.5 mb-5">
-            <div className="w-7 h-7 bg-amber-400 flex items-center justify-center text-black font-bold text-[11px] font-mono rounded-sm">FT</div>
-            <span className="text-[14px] font-semibold text-zinc-100">FormThread</span>
+        <div style={{ padding: '28px 32px 22px', borderBottom: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <div style={{
+              width: 34, height: 34,
+              background: 'linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%)',
+              borderRadius: 9,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 16px var(--accent-glow)',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4h12M2 8h9M2 12h11" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                FormThread
+              </div>
+              <div style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
+                conversational forms
+              </div>
+            </div>
           </div>
-          <h1 className="text-[18px] font-semibold text-zinc-100 leading-snug">Sign in to your workspace</h1>
-          <p className="font-mono text-[10px] text-zinc-500 mt-1.5">conversational forms · role-based access</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.03em', margin: '0 0 4px' }}>
+            Sign in to your workspace
+          </h1>
+          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: 'var(--text-muted)', margin: 0 }}>
+            role-based access · real-time threads
+          </p>
         </div>
 
         {/* Body */}
-        <div className="px-8 py-6 flex flex-col gap-4">
-          <p className="text-[12px] text-zinc-500 leading-relaxed">
-            Sign in with your Google account. Your role (admin or participant) is assigned automatically based on your account.
+        <div style={{ padding: '22px 32px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+            Sign in with your Google account. Your role is assigned automatically based on your account.
           </p>
 
-          {/* Error */}
           {error && (
-            <div className="px-3 py-2 rounded-sm bg-rose-400/10 border border-rose-400/20">
-              <p className="font-mono text-[10px] text-rose-400">{error}</p>
+            <div style={{
+              padding: '10px 12px', borderRadius: 8,
+              background: 'rgba(248,113,113,0.07)',
+              border: '1px solid rgba(248,113,113,0.2)',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{ color: '#f87171', fontSize: 12 }}>⚠</span>
+              <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: '#f87171', margin: 0 }}>
+                {error}
+              </p>
             </div>
           )}
 
@@ -51,30 +104,50 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className={`
-              w-full flex items-center justify-center gap-3
-              px-4 py-3 rounded-sm border transition-all duration-150
-              ${loading
-                ? 'border-zinc-700 bg-zinc-800 cursor-not-allowed'
-                : 'border-zinc-700 bg-zinc-800/60 hover:bg-zinc-800 hover:border-zinc-600 active:scale-[.99]'
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              padding: '12px 20px',
+              borderRadius: 10,
+              border: '1px solid var(--border-mid)',
+              background: loading ? 'var(--bg-elevated)' : 'var(--bg-elevated)',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            }}
+            onMouseEnter={e => {
+              if (!loading) {
+                e.currentTarget.style.borderColor = 'var(--border-strong)';
+                e.currentTarget.style.background = 'var(--bg-hover)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
               }
-            `}
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'var(--border-mid)';
+              e.currentTarget.style.background = 'var(--bg-elevated)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
+            }}
           >
             {loading ? (
               <>
                 <LoadingSpinner />
-                <span className="font-mono text-[11px] text-zinc-400">Redirecting to Google…</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '-0.01em' }}>
+                  Redirecting to Google…
+                </span>
               </>
             ) : (
               <>
                 <GoogleIcon />
-                <span className="text-[12px] font-medium text-zinc-300">Continue with Google</span>
+                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+                  Continue with Google
+                </span>
               </>
             )}
           </button>
 
-          <p className="font-mono text-[9px] text-zinc-700 text-center leading-relaxed">
-            By continuing you agree to the Terms of Service.<br />
+          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.6, margin: 0 }}>
+            By continuing you agree to the Terms of Service.<br/>
             Role is assigned based on your account.
           </p>
         </div>
@@ -93,10 +166,9 @@ const GoogleIcon = () => (
 );
 
 const LoadingSpinner = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" style={{ animation: 'spin 0.8s linear infinite' }}>
-    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    <circle cx="7" cy="7" r="5.5" stroke="#52525b" strokeWidth="1.5" fill="none" />
-    <path d="M7 1.5A5.5 5.5 0 0112.5 7" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+  <svg width="14" height="14" viewBox="0 0 14 14" className="animate-spin">
+    <circle cx="7" cy="7" r="5.5" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
+    <path d="M7 1.5A5.5 5.5 0 0112.5 7" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
   </svg>
 );
 

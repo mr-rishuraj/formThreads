@@ -7,28 +7,28 @@ import ReplyBox from './ReplyBox';
 interface ThreadViewProps {
   question: Question | null;
   form: Form | null;
-  onSendReply: (questionId: string, content: string) => void;
+  onSendReply: (questionId: string, content: string) => Promise<void> | void;
   onUpdateQuestion?: (id: string, patch: Partial<Pick<Question, 'title' | 'description'>>) => void;
   newMessageId?: string | null;
   user: User;
 }
 
 const STATUS_CONFIG = {
-  answered: { label: 'Answered', bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
-  unanswered: { label: 'Awaiting reply', bg: 'bg-amber-400/10', text: 'text-amber-400', border: 'border-amber-400/20' },
-  'needs-clarification': { label: 'Follow-up needed', bg: 'bg-rose-400/10', text: 'text-rose-400', border: 'border-rose-400/20' },
+  answered: { label: 'Answered', bg: 'rgba(52,211,153,0.08)', text: '#34d399', border: 'rgba(52,211,153,0.2)', dot: '#34d399' },
+  unanswered: { label: 'Awaiting reply', bg: 'rgba(245,158,11,0.08)', text: '#f59e0b', border: 'rgba(245,158,11,0.2)', dot: '#f59e0b' },
+  'needs-clarification': { label: 'Follow-up needed', bg: 'rgba(248,113,113,0.08)', text: '#f87171', border: 'rgba(248,113,113,0.2)', dot: '#f87171' },
 } as const;
 
-// ── Inline editable field ─────────────────────────────────────
+// ── Editable Field ────────────────────────────────────────────
 interface EditableFieldProps {
   value: string;
   placeholder: string;
   onSave: (val: string) => void;
   multiline?: boolean;
-  textClass?: string;
+  style?: React.CSSProperties;
 }
 
-const EditableField: React.FC<EditableFieldProps> = ({ value, placeholder, onSave, multiline = false, textClass = '' }) => {
+const EditableField: React.FC<EditableFieldProps> = ({ value, placeholder, onSave, multiline = false, style = {} }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
@@ -47,18 +47,53 @@ const EditableField: React.FC<EditableFieldProps> = ({ value, placeholder, onSav
   };
 
   if (editing) {
-    const base = `w-full bg-zinc-800/80 border border-amber-400/50 rounded-sm text-zinc-100 placeholder-zinc-600 outline-none ${textClass}`;
+    const baseStyle: React.CSSProperties = {
+      width: '100%',
+      background: 'var(--bg-elevated)',
+      border: '1px solid var(--accent-dim)',
+      borderRadius: 6,
+      color: 'var(--text-primary)',
+      outline: 'none',
+      fontFamily: "'Outfit', system-ui, sans-serif",
+      ...style,
+    };
     return multiline
-      ? <textarea autoFocus rows={3} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={handleKeyDown} onBlur={commit} placeholder={placeholder} className={`${base} px-3 py-2 resize-none leading-[1.65]`} />
-      : <input autoFocus type="text" value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={handleKeyDown} onBlur={commit} placeholder={placeholder} className={`${base} px-2 py-0.5`} />;
+      ? <textarea autoFocus rows={3} value={draft} onChange={e => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown} onBlur={(e) => { const rel = e.relatedTarget as HTMLElement | null; if (rel && (rel.tagName === "BUTTON" || rel.closest("button"))) return; commit(); }} placeholder={placeholder}
+          style={{ ...baseStyle, padding: '8px 10px', resize: 'none', lineHeight: 1.6 }}
+        />
+      : <input autoFocus type="text" value={draft} onChange={e => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown} onBlur={(e) => { const rel = e.relatedTarget as HTMLElement | null; if (rel && (rel.tagName === "BUTTON" || rel.closest("button"))) return; commit(); }} placeholder={placeholder}
+          style={{ ...baseStyle, padding: '3px 8px' }}
+        />;
   }
 
   return (
-    <button onClick={() => { setDraft(value); setEditing(true); }} title="Click to edit"
-      className={`text-left w-full group/ef relative hover:bg-zinc-800/50 rounded-sm px-1 -mx-1 transition-colors duration-100 ${textClass}`}>
-      {value ? <span>{value}</span> : <span className="italic text-zinc-600">{placeholder}</span>}
-      <span className="absolute right-0.5 top-0 opacity-0 group-hover/ef:opacity-100 font-mono text-[8px] text-amber-400/70 transition-opacity pointer-events-none select-none">✎</span>
-    </button>
+    <div
+      onClick={() => { setDraft(value); setEditing(true); }}
+      title="Click to edit"
+      style={{
+        cursor: 'text', position: 'relative',
+        padding: '2px 4px', margin: '-2px -4px',
+        borderRadius: 4,
+        transition: 'background 0.1s',
+        ...style,
+      }}
+      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'}
+      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+    >
+      {value ? (
+        <span>{value}</span>
+      ) : (
+        <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>{placeholder}</span>
+      )}
+      <span style={{
+        position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
+        fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--accent)',
+        opacity: 0, transition: 'opacity 0.1s',
+        pointerEvents: 'none', userSelect: 'none',
+      }} className="edit-pencil">✎</span>
+    </div>
   );
 };
 
@@ -66,8 +101,6 @@ const EditableField: React.FC<EditableFieldProps> = ({ value, placeholder, onSav
 const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, onUpdateQuestion, newMessageId, user }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isAdmin = user.role === 'admin';
-
-  // Realtime messages from Supabase
   const { messages, loading: messagesLoading } = useMessages(question?.id ?? null);
 
   useEffect(() => {
@@ -76,10 +109,29 @@ const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, on
 
   if (!question) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-zinc-950/40">
-        <div className="text-center">
-          <div className="text-5xl text-zinc-800 mb-3">◈</div>
-          <p className="font-mono text-[11px] text-zinc-700">Select a question to view the thread</p>
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--bg-base)',
+      }}>
+        <div style={{ textAlign: 'center', maxWidth: 280 }}>
+          <div style={{
+            width: 56, height: 56,
+            borderRadius: 16,
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-mid)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 16px',
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M4 6h16M4 10h10M4 14h13M4 18h8" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)', margin: '0 0 6px' }}>
+            No thread selected
+          </p>
+          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: 'var(--text-muted)' }}>
+            Pick a question from the list to view the conversation
+          </p>
         </div>
       </div>
     );
@@ -89,59 +141,166 @@ const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, on
   const respondentInitial = (form?.respondentName?.[0] ?? 'R').toUpperCase();
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-zinc-950/30">
-
-      {/* Header */}
-      <div className="px-6 py-3.5 border-b border-zinc-800 flex-shrink-0 flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          {isAdmin
-            ? <EditableField value={question.title} placeholder="Untitled Question" onSave={v => onUpdateQuestion?.(question.id, { title: v })} textClass="text-[13px] font-semibold text-zinc-100 leading-snug" />
-            : <h2 className="text-[13px] font-semibold text-zinc-100 leading-snug">{question.title}</h2>
-          }
-          <p className="font-mono text-[9px] text-zinc-600 mt-1">
-            {form?.name} · {messages.length} messages · {question.lastActivity}
-            {isAdmin && <span className="ml-1.5 text-zinc-700">· click any field to edit</span>}
-          </p>
-        </div>
-        <span className={`flex-shrink-0 px-2.5 py-1 rounded-sm font-mono text-[9px] font-medium border whitespace-nowrap ${status.bg} ${status.text} ${status.border}`}>
-          {status.label}
-        </span>
-      </div>
-
-      {/* Context card */}
-      <div className="px-6 py-3 border-b border-zinc-800/50 flex-shrink-0">
-        <div className={`bg-zinc-900/60 border rounded-sm px-4 py-3 transition-colors duration-150 ${isAdmin ? 'border-zinc-700' : 'border-zinc-800'}`}>
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="font-mono text-[9px] text-zinc-600 uppercase tracking-[.1em]">Question context</p>
-            {isAdmin && <span className="font-mono text-[8px] text-zinc-700 italic">admin · editable</span>}
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0,
+      background: 'var(--bg-base)',
+    }}>
+      {/* ── Header ── */}
+      <div style={{
+        padding: '14px 24px 12px',
+        borderBottom: '1px solid var(--border-subtle)',
+        flexShrink: 0,
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16,
+        background: 'var(--bg-surface)',
+      }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          {isAdmin ? (
+            <EditableField
+              value={question.title}
+              placeholder="Untitled Question"
+              onSave={v => onUpdateQuestion?.(question.id, { title: v })}
+              style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.4 }}
+            />
+          ) : (
+            <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.4 }}>
+              {question.title}
+            </h2>
+          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5 }}>
+            <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
+              {form?.name}
+            </span>
+            <span style={{ width: 2, height: 2, borderRadius: '50%', background: 'var(--text-muted)', display: 'inline-block' }} />
+            <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
+              {messages.length} messages
+            </span>
+            <span style={{ width: 2, height: 2, borderRadius: '50%', background: 'var(--text-muted)', display: 'inline-block' }} />
+            <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
+              {question.lastActivity}
+            </span>
           </div>
-          {isAdmin
-            ? <EditableField value={question.description} placeholder="Add context or instructions for the respondent…" onSave={v => onUpdateQuestion?.(question.id, { description: v })} multiline textClass="text-[12px] text-zinc-400" />
-            : <p className="text-[12px] text-zinc-400 leading-[1.65]">{question.description || <span className="italic text-zinc-600">No context provided</span>}</p>
-          }
+        </div>
+
+        {/* Status badge */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '5px 10px',
+          borderRadius: 20,
+          background: status.bg,
+          border: `1px solid ${status.border}`,
+          flexShrink: 0,
+        }}>
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%',
+            background: status.dot,
+            display: 'inline-block',
+            boxShadow: `0 0 5px ${status.dot}`,
+          }} />
+          <span style={{
+            fontFamily: "'Fira Code', monospace", fontSize: 9, fontWeight: 600,
+            color: status.text, whiteSpace: 'nowrap',
+          }}>
+            {status.label}
+          </span>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-[18px]">
+      {/* ── Context card ── */}
+      <div style={{
+        padding: '12px 24px',
+        borderBottom: '1px solid var(--border-subtle)',
+        flexShrink: 0,
+        background: 'var(--bg-surface)',
+      }}>
+        <div style={{
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border-mid)',
+          borderRadius: 10,
+          padding: '12px 14px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+            <div style={{
+              width: 18, height: 18,
+              borderRadius: 5,
+              background: 'var(--accent-soft)',
+              border: '1px solid var(--accent-dim)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                <path d="M5 1v5M5 8.5v.5" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Question context
+            </span>
+            {isAdmin && (
+              <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 8, color: 'var(--text-muted)', marginLeft: 'auto', fontStyle: 'italic' }}>
+                editable
+              </span>
+            )}
+          </div>
+          {isAdmin ? (
+            <EditableField
+              value={question.description}
+              placeholder="Add context or instructions for the respondent…"
+              onSave={v => onUpdateQuestion?.(question.id, { description: v })}
+              multiline
+              style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.65 }}
+            />
+          ) : (
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0 }}>
+              {question.description || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No context provided</span>}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Messages ── */}
+      <div style={{
+        flex: 1, overflowY: 'auto',
+        padding: '20px 24px',
+        display: 'flex', flexDirection: 'column', gap: 16,
+      }}>
         {messagesLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="font-mono text-[10px] text-zinc-700">Loading messages…</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+            <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+              {[0,1,2].map(i => (
+                <span key={i} className="typing-dot" style={{ animationDelay: `${i * 0.14}s` }} />
+              ))}
+            </div>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="font-mono text-[10px] text-zinc-700">No replies yet</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: 32, marginBottom: 10,
+                filter: 'grayscale(1)', opacity: 0.3,
+              }}>💬</div>
+              <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: 'var(--text-muted)' }}>
+                No replies yet — be the first
+              </p>
+            </div>
           </div>
         ) : (
-          messages.map(m => <MessageBubble key={m.id} message={m} isNew={m.id === newMessageId} />)
+          <>
+            <div className="divider-label">thread start</div>
+            {messages.map((m, i) => (
+              <MessageBubble key={m.id} message={m} isNew={i === messages.length - 1} />
+            ))}
+          </>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Reply box */}
-      <div className="px-6 pb-5 pt-3 flex-shrink-0 border-t border-zinc-800">
+      {/* ── Reply box ── */}
+      <div style={{
+        padding: '12px 24px 18px',
+        flexShrink: 0,
+        borderTop: '1px solid var(--border-subtle)',
+        background: 'var(--bg-surface)',
+      }}>
         <ReplyBox
-          onSend={(content) => onSendReply(question.id, content)}
+          onSend={content => onSendReply(question.id, content) ?? Promise.resolve()}
           respondentName={isAdmin ? user.name : (form?.respondentName ?? 'Respondent')}
           respondentInitial={isAdmin ? user.initial : respondentInitial}
         />

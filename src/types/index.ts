@@ -2,13 +2,24 @@ export type MessageRole = 'creator' | 'respondent';
 export type QuestionStatus = 'unanswered' | 'answered' | 'needs-clarification';
 export type UserRole = 'admin' | 'participant';
 
+// ── NEW: Team ──────────────────────────────────────────────────
+export interface Team {
+  id: string;
+  name: string;
+  code: string;
+  createdBy: string;
+  createdAt: string;
+}
+
 export interface User {
   email: string;
   name: string;
   role: UserRole;
   initial: string;
-  /** form IDs this participant is assigned to (ignored for admin) */
   assignedFormIds: string[];
+  // NEW: null means participant hasn't joined a team yet
+  teamId: string | null;
+  teamName: string | null;
 }
 
 export interface Message {
@@ -40,4 +51,5 @@ export interface Form {
   respondentName: string;
   respondentEmail: string;
   icon: string;
+  teamIds?: string[];  // NEW: teams this form is assigned to
 }

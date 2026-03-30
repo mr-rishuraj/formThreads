@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, KeyboardEvent } from 'react';
 
 interface CreateFormModalProps {
-  // icon is passed back so App.tsx / useFormThread can use it
   onConfirm: (name: string, respondentName: string, respondentEmail: string, icon: string) => void;
   onClose: () => void;
 }
@@ -16,16 +15,9 @@ const CreateFormModal: React.FC<CreateFormModalProps> = ({ onConfirm, onClose })
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
 
-  // Focus name field on mount
+  useEffect(() => { nameRef.current?.focus(); }, []);
   useEffect(() => {
-    nameRef.current?.focus();
-  }, []);
-
-  // Close on Escape
-  useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const onKey = (e: globalThis.KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
@@ -33,17 +25,8 @@ const CreateFormModal: React.FC<CreateFormModalProps> = ({ onConfirm, onClose })
   const handleSubmit = () => {
     const trimmedName = name.trim();
     const trimmedRespondent = respondentName.trim();
-
-    if (!trimmedName) {
-      setError('Form name is required.');
-      nameRef.current?.focus();
-      return;
-    }
-    if (!trimmedRespondent) {
-      setError('Respondent name is required.');
-      return;
-    }
-
+    if (!trimmedName) { setError('Form name is required.'); nameRef.current?.focus(); return; }
+    if (!trimmedRespondent) { setError('Respondent name is required.'); return; }
     onConfirm(trimmedName, trimmedRespondent, respondentEmail.trim(), ICONS[iconIndex]);
   };
 
@@ -51,142 +34,227 @@ const CreateFormModal: React.FC<CreateFormModalProps> = ({ onConfirm, onClose })
     if (e.key === 'Enter') handleSubmit();
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-mid)',
+    borderRadius: 8,
+    padding: '10px 12px',
+    fontSize: 13,
+    color: 'var(--text-primary)',
+    outline: 'none',
+    fontFamily: "'Outfit', sans-serif",
+    transition: 'border-color 0.15s, box-shadow 0.15s',
+    letterSpacing: '-0.01em',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontFamily: "'Fira Code', monospace", fontSize: 9,
+    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em',
+    marginBottom: 6,
+  };
+
   return (
-    /* Backdrop */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 50,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.65)',
+        backdropFilter: 'blur(4px)',
+      }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      {/* Modal panel */}
-      <div className="w-[400px] bg-zinc-900 border border-zinc-700 rounded-sm shadow-2xl">
+      <div className="animate-pop-in" style={{
+        width: 420,
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-mid)',
+        borderRadius: 14,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.8)',
+        overflow: 'hidden',
+      }}>
+        <div style={{ height: 2, background: 'linear-gradient(90deg, var(--accent), #a78bfa)' }} />
 
         {/* Header */}
-        <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+        <div style={{
+          padding: '18px 22px 16px',
+          borderBottom: '1px solid var(--border-subtle)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
           <div>
-            <h2 className="text-[13px] font-semibold text-zinc-100">Create form</h2>
-            <p className="font-mono text-[9px] text-zinc-600 mt-0.5">New conversational form</p>
+            <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 2px', letterSpacing: '-0.02em' }}>
+              Create form
+            </h2>
+            <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)', margin: 0 }}>
+              New conversational form
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-600 hover:text-zinc-300 font-mono text-[14px] leading-none transition-colors duration-100 w-6 h-6 flex items-center justify-center rounded-sm hover:bg-zinc-800"
-          >
-            ×
-          </button>
+            style={{
+              width: 28, height: 28,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+              borderRadius: 7, cursor: 'pointer',
+              color: 'var(--text-muted)', fontSize: 14, lineHeight: 1,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'var(--bg-hover)';
+              e.currentTarget.style.color = 'var(--text-primary)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'var(--bg-elevated)';
+              e.currentTarget.style.color = 'var(--text-muted)';
+            }}
+          >×</button>
         </div>
 
         {/* Body */}
-        <div className="px-5 py-4 flex flex-col gap-4">
-
+        <div style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Icon picker */}
           <div>
-            <label className="font-mono text-[9px] text-zinc-500 uppercase tracking-[.1em] block mb-2">
-              Icon
-            </label>
-            <div className="flex gap-1.5">
+            <label style={labelStyle}>Icon</label>
+            <div style={{ display: 'flex', gap: 6 }}>
               {ICONS.map((icon, i) => (
                 <button
                   key={icon}
                   onClick={() => setIconIndex(i)}
-                  className={`
-                    w-7 h-7 flex items-center justify-center text-[13px] rounded-sm border transition-all duration-100
-                    ${iconIndex === i
-                      ? 'border-amber-400/60 bg-amber-400/10 text-amber-400'
-                      : 'border-zinc-700 bg-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-300'
-                    }
-                  `}
-                >
-                  {icon}
-                </button>
+                  style={{
+                    width: 32, height: 32, fontSize: 14,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: 7,
+                    border: `1px solid ${i === iconIndex ? 'var(--accent)' : 'var(--border-mid)'}`,
+                    background: i === iconIndex ? 'var(--accent-soft)' : 'var(--bg-elevated)',
+                    color: i === iconIndex ? 'var(--accent)' : 'var(--text-tertiary)',
+                    cursor: 'pointer', transition: 'all 0.12s',
+                    boxShadow: i === iconIndex ? '0 0 8px var(--accent-glow)' : 'none',
+                  }}
+                >{icon}</button>
               ))}
             </div>
           </div>
 
-          {/* Form name */}
           <div>
-            <label className="font-mono text-[9px] text-zinc-500 uppercase tracking-[.1em] block mb-1.5">
-              Form name <span className="text-rose-400">*</span>
-            </label>
+            <label style={labelStyle}>Form name <span style={{ color: '#f87171' }}>*</span></label>
             <input
               ref={nameRef}
               type="text"
               value={name}
-              onChange={(e) => { setName(e.target.value); setError(''); }}
+              onChange={e => { setName(e.target.value); setError(''); }}
               onKeyDown={handleKeyDown}
               placeholder="e.g. Series A Due Diligence"
-              className="
-                w-full bg-zinc-800 border border-zinc-700 rounded-sm
-                px-3 py-2 text-[12.5px] text-zinc-100 placeholder-zinc-600
-                outline-none focus:border-zinc-500 transition-colors duration-100
-                font-sans
-              "
+              style={inputStyle}
+              onFocus={e => {
+                e.target.style.borderColor = 'var(--accent-dim)';
+                e.target.style.boxShadow = '0 0 0 3px var(--accent-soft)';
+              }}
+              onBlur={e => {
+                e.target.style.borderColor = 'var(--border-mid)';
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </div>
 
-          {/* Respondent name */}
           <div>
-            <label className="font-mono text-[9px] text-zinc-500 uppercase tracking-[.1em] block mb-1.5">
-              Respondent name <span className="text-rose-400">*</span>
-            </label>
+            <label style={labelStyle}>Respondent name <span style={{ color: '#f87171' }}>*</span></label>
             <input
               type="text"
               value={respondentName}
-              onChange={(e) => { setRespondentName(e.target.value); setError(''); }}
+              onChange={e => { setRespondentName(e.target.value); setError(''); }}
               onKeyDown={handleKeyDown}
               placeholder="e.g. Arjun Mehta"
-              className="
-                w-full bg-zinc-800 border border-zinc-700 rounded-sm
-                px-3 py-2 text-[12.5px] text-zinc-100 placeholder-zinc-600
-                outline-none focus:border-zinc-500 transition-colors duration-100
-                font-sans
-              "
+              style={inputStyle}
+              onFocus={e => {
+                e.target.style.borderColor = 'var(--accent-dim)';
+                e.target.style.boxShadow = '0 0 0 3px var(--accent-soft)';
+              }}
+              onBlur={e => {
+                e.target.style.borderColor = 'var(--border-mid)';
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </div>
 
-          {/* Respondent email */}
           <div>
-            <label className="font-mono text-[9px] text-zinc-500 uppercase tracking-[.1em] block mb-1.5">
-              Respondent email
-            </label>
+            <label style={labelStyle}>Respondent email</label>
             <input
               type="email"
               value={respondentEmail}
-              onChange={(e) => setRespondentEmail(e.target.value)}
+              onChange={e => setRespondentEmail(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="e.g. arjun@company.com"
-              className="
-                w-full bg-zinc-800 border border-zinc-700 rounded-sm
-                px-3 py-2 text-[12.5px] text-zinc-100 placeholder-zinc-600
-                outline-none focus:border-zinc-500 transition-colors duration-100
-                font-sans
-              "
+              style={inputStyle}
+              onFocus={e => {
+                e.target.style.borderColor = 'var(--accent-dim)';
+                e.target.style.boxShadow = '0 0 0 3px var(--accent-soft)';
+              }}
+              onBlur={e => {
+                e.target.style.borderColor = 'var(--border-mid)';
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </div>
 
-          {/* Error */}
           {error && (
-            <p className="font-mono text-[9px] text-rose-400">{error}</p>
+            <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: '#f87171', margin: 0 }}>
+              ⚠ {error}
+            </p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3.5 border-t border-zinc-800 flex items-center justify-between">
-          <span className="font-mono text-[9px] text-zinc-700">Esc to cancel</span>
-          <div className="flex items-center gap-2">
+        <div style={{
+          padding: '14px 22px 18px',
+          borderTop: '1px solid var(--border-subtle)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
+            Esc to cancel
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={onClose}
-              className="px-3 py-1.5 font-mono text-[10px] text-zinc-400 hover:text-zinc-200 border border-zinc-700 hover:border-zinc-600 rounded-sm transition-colors duration-100"
+              style={{
+                padding: '8px 14px',
+                fontFamily: "'Fira Code', monospace", fontSize: 10,
+                color: 'var(--text-secondary)',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-mid)',
+                borderRadius: 8, cursor: 'pointer',
+                transition: 'all 0.12s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-mid)'}
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
-              className="px-3.5 py-1.5 font-mono text-[10px] font-semibold bg-amber-400 text-black hover:bg-amber-300 rounded-sm transition-colors duration-100 active:scale-[.97]"
+              style={{
+                padding: '8px 18px',
+                fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600,
+                color: 'white',
+                background: 'linear-gradient(135deg, var(--accent) 0%, #8b7cf6 100%)',
+                border: 'none',
+                borderRadius: 8, cursor: 'pointer',
+                transition: 'all 0.12s',
+                letterSpacing: '-0.01em',
+                boxShadow: '0 2px 8px var(--accent-glow)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 14px var(--accent-glow)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px var(--accent-glow)';
+              }}
             >
               Create form
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );

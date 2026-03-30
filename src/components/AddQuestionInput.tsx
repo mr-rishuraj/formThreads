@@ -11,14 +11,10 @@ const AddQuestionInput: React.FC<AddQuestionInputProps> = ({ onAdd }) => {
 
   const open = () => {
     setIsOpen(true);
-    // Let DOM update before focusing
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
-  const cancel = () => {
-    setIsOpen(false);
-    setValue('');
-  };
+  const cancel = () => { setIsOpen(false); setValue(''); };
 
   const submit = () => {
     const trimmed = value.trim();
@@ -33,61 +29,101 @@ const AddQuestionInput: React.FC<AddQuestionInputProps> = ({ onAdd }) => {
     if (e.key === 'Escape') cancel();
   };
 
-  // Collapsed state — a subtle "+ Add question" button
   if (!isOpen) {
     return (
       <button
         onClick={open}
-        className="
-          w-full px-4 py-2.5 flex items-center gap-2
-          text-zinc-700 hover:text-zinc-400
-          hover:bg-zinc-900/40
-          border-t border-zinc-800/60
-          transition-colors duration-100 group
-        "
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px 16px',
+          background: 'none', border: 'none',
+          borderTop: '1px solid var(--border-subtle)',
+          cursor: 'pointer',
+          color: 'var(--text-muted)',
+          transition: 'all 0.15s',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.color = 'var(--text-secondary)';
+          e.currentTarget.style.background = 'var(--bg-hover)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.color = 'var(--text-muted)';
+          e.currentTarget.style.background = 'none';
+        }}
       >
-        <span className="font-mono text-[10px] leading-none group-hover:text-amber-400 transition-colors duration-100">+</span>
-        <span className="font-mono text-[9px]">Add question</span>
+        <div style={{
+          width: 18, height: 18, borderRadius: 5,
+          border: '1px dashed var(--border-mid)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 13, lineHeight: 1, flexShrink: 0,
+          transition: 'border-color 0.15s',
+        }}>+</div>
+        <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 10 }}>
+          Add question
+        </span>
       </button>
     );
   }
 
-  // Expanded state — inline input
   return (
-    <div className="border-t border-zinc-800/60 bg-zinc-900/40 px-3.5 py-2.5">
+    <div className="animate-fade-in" style={{
+      borderTop: '1px solid var(--border-subtle)',
+      padding: '12px 14px',
+      background: 'var(--bg-hover)',
+    }}>
       <input
         ref={inputRef}
         type="text"
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={e => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Question title…"
-        className="
-          w-full bg-zinc-800 border border-zinc-700 rounded-sm
-          px-2.5 py-1.5 text-[11.5px] text-zinc-100 placeholder-zinc-600
-          outline-none focus:border-zinc-500 transition-colors duration-100
-          font-sans
-        "
+        style={{
+          width: '100%',
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--accent-dim)',
+          borderRadius: 7,
+          padding: '8px 10px',
+          fontSize: 12,
+          color: 'var(--text-primary)',
+          outline: 'none',
+          fontFamily: "'Outfit', sans-serif",
+          boxShadow: '0 0 0 3px var(--accent-soft)',
+          letterSpacing: '-0.01em',
+        }}
       />
-      <div className="flex items-center justify-between mt-2">
-        <span className="font-mono text-[9px] text-zinc-700">Enter to add · Esc to cancel</span>
-        <div className="flex items-center gap-1.5">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+        <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
+          ↵ add · Esc cancel
+        </span>
+        <div style={{ display: 'flex', gap: 6 }}>
           <button
             onClick={cancel}
-            className="px-2 py-1 font-mono text-[9px] text-zinc-500 hover:text-zinc-300 border border-zinc-700 hover:border-zinc-600 rounded-sm transition-colors duration-100"
+            style={{
+              padding: '5px 10px',
+              fontFamily: "'Fira Code', monospace", fontSize: 9,
+              color: 'var(--text-tertiary)',
+              background: 'var(--bg-elevated)', border: '1px solid var(--border-mid)',
+              borderRadius: 6, cursor: 'pointer', transition: 'all 0.12s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-mid)'}
           >
             Cancel
           </button>
           <button
             onClick={submit}
             disabled={!value.trim()}
-            className={`
-              px-2 py-1 font-mono text-[9px] font-semibold rounded-sm transition-all duration-100
-              ${value.trim()
-                ? 'bg-amber-400 text-black hover:bg-amber-300 active:scale-[.97]'
-                : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-              }
-            `}
+            style={{
+              padding: '5px 12px',
+              fontFamily: "'Fira Code', monospace", fontSize: 9, fontWeight: 600,
+              color: value.trim() ? 'white' : 'var(--text-muted)',
+              background: value.trim() ? 'var(--accent)' : 'var(--bg-elevated)',
+              border: 'none', borderRadius: 6,
+              cursor: value.trim() ? 'pointer' : 'not-allowed',
+              transition: 'all 0.12s',
+              boxShadow: value.trim() ? '0 1px 6px var(--accent-glow)' : 'none',
+            }}
           >
             Add
           </button>

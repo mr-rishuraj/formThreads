@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Form, Question, Message } from '../types';
+import type { Form, Question, Message, Team } from '../types';
 
 // ── Raw DB row types ──────────────────────────────────────────
 
@@ -26,6 +26,14 @@ type DBMessage = {
   content: string;
   created_at: string;
   users?: { email: string; role: string }[] | null;
+};
+
+type DBTeam = {
+  id: string;
+  name: string;
+  code: string;
+  created_by: string;
+  created_at: string;
 };
 
 // ── Mappers ───────────────────────────────────────────────────
@@ -62,14 +70,20 @@ function mapMessage(db: DBMessage): Message {
     role: userObj?.role === 'admin' ? 'creator' : 'respondent',
     content: db.content,
     timestamp: new Date(db.created_at).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
     }),
     senderName,
     senderInitial: senderName[0]?.toUpperCase() ?? '?',
+  };
+}
+
+function mapTeam(db: DBTeam): Team {
+  return {
+    id: db.id,
+    name: db.name,
+    code: db.code,
+    createdBy: db.created_by,
+    createdAt: db.created_at.split('T')[0],
   };
 }
 
@@ -130,10 +144,7 @@ export async function updateQuestionInDB(
   questionId: string,
   patch: { title?: string; description?: string }
 ): Promise<void> {
-  const { error } = await supabase
-    .from('questions')
-    .update(patch)
-    .eq('id', questionId);
+  const { error } = await supabase.from('questions').update(patch).eq('id', questionId);
   if (error) throw error;
 }
 
@@ -181,4 +192,165 @@ export async function getParticipantInfo(
   const namePart = email.split('@')[0];
   const name = namePart.charAt(0).toUpperCase() + namePart.slice(1).replace(/[._-]/g, ' ');
   return { respondentName: name, respondentEmail: email };
+}
+
+// ── Teams ─────────────────────────────────────────────────────
+
+/** Admin: get all teams */
+export async function getAllTeams(): Promise<Team[]> {
+  const { data, error } = await supabase
+    .from('teams')
+    .select('id, name, code, created_by, created_at')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data as DBTeam[]).map(mapTeam);
+}
+
+/** Participant: get their team (via team_members) */
+export async function getMyTeam(): Promise<Team | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from('team_members')
+    .select('team_id, teams(id, name, code, created_by, created_at)')
+    .eq('user_id', user.id)
+    .limit(1);
+
+  if (error || !data || data.length === 0) return null;
+
+  const row = data[0] as any;
+  const team = row.teams;
+  if (!team) return null;
+
+  return {
+    id: team.id,
+    name: team.name,
+    code: team.code,
+    createdBy: team.created_by,
+    createdAt: team.created_at?.split('T')[0] ?? '',
+  };
+}
+/** Validate a team code and return the team if valid */
+export async function getTeamByCode(code: string): Promise<Team | null> {
+  const { data, error } = await supabase
+    .from('teams')
+    .select('id, name, code, created_by, created_at')
+    .eq('code', code.trim().toUpperCase())
+    .single();
+  if (error || !data) return null;
+  return mapTeam(data as DBTeam);
+}
+
+/** Admin: create a new team. Auto-generates code via DB function */
+export async function createTeam(name: string): Promise<Team> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  // Generate code client-side (6 chars, uppercase alphanumeric, no ambiguous chars)
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const code = Array.from({ length: 6 }, () =>
+    chars[Math.floor(Math.random() * chars.length)]
+  ).join('');
+
+  const { data, error } = await supabase
+    .from('teams')
+    .insert({ name: name.trim(), code, created_by: user.id })
+    .select('id, name, code, created_by, created_at')
+    .single();
+  if (error) throw error;
+  return mapTeam(data as DBTeam);
+}
+
+/** Participant: join a team by inserting into team_members */
+export async function joinTeam(teamId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  const { error } = await supabase
+    .from('team_members')
+    .insert({ user_id: user.id, team_id: teamId });
+  if (error) throw error;
+}
+
+// ── Form ↔ Team assignment ────────────────────────────────────
+
+/** Admin: get team IDs assigned to a form */
+export async function getFormTeams(formId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('form_teams')
+    .select('team_id')
+    .eq('form_id', formId);
+  if (error) throw error;
+  return (data ?? []).map((r: { team_id: string }) => r.team_id);
+}
+
+/** Admin: assign a form to a team */
+export async function assignFormToTeam(formId: string, teamId: string): Promise<void> {
+  const { error } = await supabase
+    .from('form_teams')
+    .insert({ form_id: formId, team_id: teamId });
+  // Ignore duplicate error
+  if (error && !error.message.includes('duplicate')) throw error;
+}
+
+/** Admin: remove a form from a team */
+export async function unassignFormFromTeam(formId: string, teamId: string): Promise<void> {
+  const { error } = await supabase
+    .from('form_teams')
+    .delete()
+    .eq('form_id', formId)
+    .eq('team_id', teamId);
+  if (error) throw error;
+}
+
+/** Participant: get form IDs accessible via their team */
+export async function getFormsForMyTeam(): Promise<string[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  // Step 1: get the user's team ID
+  const { data: memberData, error: memberError } = await supabase
+    .from('team_members')
+    .select('team_id')
+    .eq('user_id', user.id)
+    .limit(1);
+
+  if (memberError || !memberData || memberData.length === 0) return [];
+
+  const teamId = memberData[0].team_id;
+
+  // Step 2: get all form IDs assigned to that team
+  const { data: formData, error: formError } = await supabase
+    .from('form_teams')
+    .select('form_id')
+    .eq('team_id', teamId);
+
+  if (formError || !formData) return [];
+
+  return formData.map((r: { form_id: string }) => r.form_id);
+}
+export async function deleteForm(formId: string): Promise<void> {
+  const { error } = await supabase
+    .from('forms')
+    .delete()
+    .eq('id', formId);
+  if (error) throw error;
+}
+
+export async function deleteTeam(teamId: string): Promise<void> {
+  const { error } = await supabase
+    .from('teams')
+    .delete()
+    .eq('id', teamId);
+  if (error) throw error;
+}
+
+export async function leaveTeam(): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  const { error } = await supabase
+    .from('team_members')
+    .delete()
+    .eq('user_id', user.id);
+  if (error) throw error;
 }

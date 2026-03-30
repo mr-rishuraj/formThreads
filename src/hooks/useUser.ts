@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, signInWithGoogle, signOut } from '../lib/supabase';
+import { getMyTeam, leaveTeam as dbLeaveTeam } from '../queries/forms';
 import type { User } from '../types';
 
 const STORAGE_KEY = 'formthread_user';
@@ -23,6 +24,9 @@ async function fetchUser(supabaseUser: { id: string; email?: string }): Promise<
   } catch (_) {}
 
   let assignedFormIds: string[] = [];
+  let teamId: string | null = null;
+  let teamName: string | null = null;
+
   if (role === 'participant') {
     try {
       const { data } = await supabase
@@ -31,9 +35,17 @@ async function fetchUser(supabaseUser: { id: string; email?: string }): Promise<
         .eq('user_id', supabaseUser.id);
       assignedFormIds = (data ?? []).map((p: { form_id: string }) => p.form_id);
     } catch (_) {}
+
+    try {
+      const team = await getMyTeam();
+      if (team) {
+        teamId = team.id;
+        teamName = team.name;
+      }
+    } catch (_) {}
   }
 
-  return { email, name, role, initial, assignedFormIds };
+  return { email, name, role, initial, assignedFormIds, teamId, teamName };
 }
 
 export function useUser() {
@@ -46,10 +58,6 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // ── REMOVED getSession() — was causing lock contention ──
-    // onAuthStateChange fires with INITIAL_SESSION on mount,
-    // so getSession() is redundant and causes the lock error.
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
@@ -68,8 +76,39 @@ export function useUser() {
         setLoading(false);
       }
     );
-
     return () => subscription.unsubscribe();
+  }, []);
+
+  const refreshTeam = useCallback(async () => {
+    try {
+      const team = await getMyTeam();
+      setUser((prev) => {
+        if (!prev) return prev;
+        const updated = {
+          ...prev,
+          teamId: team?.id ?? null,
+          teamName: team?.name ?? null,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    } catch (_) {}
+  }, []);
+
+  // ── NEW: Leave team ────────────────────────────────────────
+  const leaveTeam = useCallback(async () => {
+    if (!window.confirm('Leave this team? You will need a new code to join another team.')) return;
+    try {
+      await dbLeaveTeam();
+      setUser((prev) => {
+        if (!prev) return prev;
+        const updated = { ...prev, teamId: null, teamName: null };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    } catch (e) {
+      console.error('leaveTeam failed:', e);
+    }
   }, []);
 
   const login = useCallback(async () => {
@@ -82,5 +121,10 @@ export function useUser() {
     setUser(null);
   }, []);
 
-  return { user, login, logout, loading, isAdmin: user?.role === 'admin' };
+  return {
+    user, login, logout, loading,
+    isAdmin: user?.role === 'admin',
+    refreshTeam,
+    leaveTeam,  // ← NEW
+  };
 }

@@ -7,12 +7,20 @@ import {
   updateQuestionInDB,
   sendMessage,
   getParticipantInfo,
+  getFormsForMyTeam,
+  deleteForm as dbDeleteForm,
 } from '../queries/forms';
+import { supabase } from '../lib/supabase';
 import type { Form, Question } from '../types';
 
 const FORM_ICONS = ['◈', '◉', '◎', '◇', '◆', '◐', '◑'];
 
-export function useFormThread() {
+interface UseFormThreadOptions {
+  isAdmin: boolean;
+  teamId: string | null;
+}
+
+export function useFormThread({ isAdmin, teamId }: UseFormThreadOptions) {
   const [forms, setForms] = useState<Form[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
@@ -21,13 +29,26 @@ export function useFormThread() {
   const [loadingForms, setLoadingForms] = useState(true);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
-  // ── Load forms on mount ────────────────────────────────────
+  // ── Load forms (fetch only, no realtime here) ──────────────
   useEffect(() => {
     setLoadingForms(true);
-    getMyForms()
-      .then(async (data) => {
+
+    const load = async () => {
+      try {
+        let allForms = await getMyForms();
+
+        if (!isAdmin) {
+          if (!teamId) {
+            setForms([]);
+            setLoadingForms(false);
+            return;
+          }
+          const teamFormIds = await getFormsForMyTeam();
+          allForms = allForms.filter((f) => teamFormIds.includes(f.id));
+        }
+
         const enriched = await Promise.all(
-          data.map(async (form, i) => {
+          allForms.map(async (form, i) => {
             let respondentName = 'Respondent';
             let respondentEmail = '';
             try {
@@ -39,18 +60,78 @@ export function useFormThread() {
             return { ...form, respondentName, respondentEmail, icon };
           })
         );
+
         setForms(enriched);
         if (enriched.length > 0) setSelectedFormId(enriched[0].id);
-      })
-      .catch((e) => console.error('getMyForms failed:', e))
-      .finally(() => setLoadingForms(false));
-  }, []);
+      } catch (e) {
+        console.error('getMyForms failed:', e);
+      } finally {
+        setLoadingForms(false);
+      }
+    };
 
-  // ── Load questions when form changes ───────────────────────
+    load();
+  }, [isAdmin, teamId]); // ← no realtime here, just fetch
+
+  // ── Forms realtime — separate effect, subscribes once ─────
+  useEffect(() => {
+    const formsChannel = supabase
+      .channel('forms:realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'forms' },
+        (payload) => {
+          const f = payload.new as any;
+          setForms((prev) => {
+            if (prev.some((form) => form.id === f.id)) return prev;
+            return [{
+              id: f.id,
+              name: f.title,
+              description: '',
+              createdAt: f.created_at?.split('T')[0] ?? '',
+              questionCount: 0,
+              respondentName: 'Respondent',
+              respondentEmail: '',
+              icon: FORM_ICONS[prev.length % FORM_ICONS.length],
+            }, ...prev];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'forms' },
+        (payload) => {
+          const f = payload.new as any;
+          setForms((prev) =>
+            prev.map((form) =>
+              form.id === f.id ? { ...form, name: f.title } : form
+            )
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'forms' },
+        (payload) => {
+          setForms((prev) => prev.filter((form) => form.id !== payload.old.id));
+        }
+      )
+      .subscribe((status) => {
+        console.log('Forms realtime:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(formsChannel);
+    };
+  }, []); // ← empty deps — stays alive for the entire session
+
+  // ── Load questions + realtime ──────────────────────────────
   useEffect(() => {
     if (!selectedFormId) return;
+
     setLoadingQuestions(true);
     setSelectedQuestionId(null);
+
     getQuestions(selectedFormId)
       .then((data) => {
         setQuestions((prev) => {
@@ -61,6 +142,58 @@ export function useFormThread() {
       })
       .catch((e) => console.error('getQuestions failed:', e))
       .finally(() => setLoadingQuestions(false));
+
+    const channel = supabase
+      .channel(`questions:${selectedFormId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'questions',
+          filter: `form_id=eq.${selectedFormId}`,
+        },
+        (payload) => {
+          const q = payload.new as any;
+          setQuestions((prev) => {
+            if (prev.some((item) => item.id === q.id)) return prev;
+            return [...prev, {
+              id: q.id,
+              formId: q.form_id,
+              title: q.title,
+              description: q.description ?? '',
+              messages: [],
+              status: 'unanswered' as const,
+              unread: true,
+              lastActivity: 'Just now',
+            }];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'questions',
+          filter: `form_id=eq.${selectedFormId}`,
+        },
+        (payload) => {
+          const q = payload.new as any;
+          setQuestions((prev) =>
+            prev.map((item) =>
+              item.id === q.id
+                ? { ...item, title: q.title, description: q.description ?? '' }
+                : item
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedFormId]);
 
   // ── Derived ────────────────────────────────────────────────
@@ -125,7 +258,7 @@ export function useFormThread() {
       setActiveTab('All');
     } catch (e) {
       console.error('createForm failed:', e);
-      alert('Failed to create form. Check console for details.');
+      alert('Failed to create form.');
     }
   }, []);
 
@@ -144,13 +277,12 @@ export function useFormThread() {
       return id;
     } catch (e) {
       console.error('addQuestion failed:', e);
-      alert('Failed to add question. Check console for details.');
+      alert('Failed to add question.');
     }
   }, [questions]);
 
   const updateQuestion = useCallback(
     async (questionId: string, patch: Partial<Pick<Question, 'title' | 'description'>>) => {
-      // Optimistic update immediately
       setQuestions((prev) =>
         prev.map((q) => (q.id === questionId ? { ...q, ...patch } : q))
       );
@@ -163,11 +295,29 @@ export function useFormThread() {
     []
   );
 
+  const removeForm = useCallback(async (formId: string) => {
+    if (!window.confirm('Delete this form? This will also delete all its questions and messages.')) return;
+    try {
+      await dbDeleteForm(formId);
+      setForms((prev) => prev.filter((f) => f.id !== formId));
+      setQuestions((prev) => prev.filter((q) => q.formId !== formId));
+      if (selectedFormId === formId) {
+        setSelectedFormId(null);
+        setSelectedQuestionId(null);
+      }
+    } catch (e) {
+      console.error('deleteForm failed:', e);
+      alert('Failed to delete form.');
+    }
+  }, [selectedFormId]);
+
   return {
     forms, visibleQuestions, allQuestions: questions,
     selectedForm, selectedQuestion, selectedFormId, selectedQuestionId,
     activeTab, setActiveTab, selectForm, selectQuestion,
     sendReply, unreadCount, createForm, addQuestion, updateQuestion,
     loadingForms, loadingQuestions,
+    setForms,
+    removeForm,
   };
 }
