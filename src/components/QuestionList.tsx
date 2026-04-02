@@ -27,6 +27,7 @@ const QuestionList: React.FC<QuestionListProps> = ({
   const answeredCount = allFormQuestions.filter(q => q.status === 'answered').length;
   const totalCount = allFormQuestions.length;
   const completionPct = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0;
+  const isComplete = completionPct === 100 && totalCount > 0;
 
   return (
     <div style={{
@@ -36,53 +37,75 @@ const QuestionList: React.FC<QuestionListProps> = ({
       background: 'var(--bg-surface)',
       position: 'relative', zIndex: 5,
     }}>
+      {/* ── STAGE CLEAR banner ── */}
+      {isComplete && (
+        <div className="animate-stage-clear" style={{
+          background: 'rgba(0,255,159,0.08)',
+          border: 'none',
+          borderBottom: '2px solid var(--status-done)',
+          borderTop: '2px solid var(--status-done)',
+          padding: '8px 16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          flexShrink: 0,
+        }}>
+          <span style={{
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 9,
+            color: 'var(--status-done)',
+            textShadow: '0 0 10px rgba(0,255,159,0.6)',
+            letterSpacing: '0.1em',
+          }}>
+            ★ STAGE CLEAR! ★
+          </span>
+        </div>
+      )}
+
       {/* ── Header ── */}
       <div style={{
-        padding: '14px 16px 12px',
+        padding: '12px 16px 10px',
         borderBottom: '1px solid var(--border-subtle)',
+        flexShrink: 0,
       }}>
         {form ? (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
               <span style={{ fontSize: 16, lineHeight: 1 }}>{form.icon}</span>
               <h2 style={{
-                fontSize: 13, fontWeight: 600, margin: 0,
-                color: 'var(--text-primary)', letterSpacing: '-0.02em',
+                fontFamily: "'VT323', monospace",
+                fontSize: 18, margin: 0,
+                color: isComplete ? 'var(--status-done)' : 'var(--text-primary)',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
                 {form.name}
               </h2>
             </div>
             <p style={{
-              fontFamily: "'Fira Code', monospace", fontSize: 10,
-              color: 'var(--text-tertiary)', margin: '0 0 10px',
+              fontFamily: "'VT323', monospace", fontSize: 13,
+              color: 'var(--text-tertiary)', margin: '0 0 8px',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {form.respondentName} · {form.respondentEmail}
             </p>
 
-            {/* Completion bar */}
+            {/* Quest progress bar */}
             <div style={{ marginBottom: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
-                  Thread completion
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Quest Progress
                 </span>
                 <span style={{
-                  fontFamily: "'Fira Code', monospace", fontSize: 9, fontWeight: 600,
-                  color: completionPct === 100 ? 'var(--status-done)' : 'var(--text-secondary)',
+                  fontFamily: "'VT323', monospace", fontSize: 13,
+                  color: isComplete ? 'var(--status-done)' : 'var(--text-secondary)',
                 }}>
                   {completionPct}%
                 </span>
               </div>
-              <div style={{ height: 3, borderRadius: 3, background: 'var(--border-subtle)', overflow: 'hidden' }}>
+              <div className="pixel-progress-track">
                 <div style={{
                   height: '100%',
                   width: `${completionPct}%`,
-                  borderRadius: 3,
-                  background: completionPct === 100
-                    ? 'var(--status-done)'
-                    : 'linear-gradient(90deg, var(--accent), #a78bfa)',
-                  transition: 'width 0.5s cubic-bezier(.16,1,.3,1)',
+                  background: isComplete ? 'var(--status-done)' : 'var(--accent)',
+                  boxShadow: isComplete ? '0 0 6px rgba(0,255,159,0.4)' : 'none',
                 }} />
               </div>
             </div>
@@ -90,19 +113,19 @@ const QuestionList: React.FC<QuestionListProps> = ({
             {/* Stat chips */}
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {awaitingCount > 0 && (
-                <Chip color="#f59e0b" bg="rgba(245,158,11,0.08)" label={`${awaitingCount} awaiting`} />
+                <Chip color="var(--status-wait)" bg="rgba(255,215,0,0.08)" label={`${awaitingCount} pending`} />
               )}
               {followUpCount > 0 && (
-                <Chip color="#f87171" bg="rgba(248,113,113,0.08)" label={`${followUpCount} follow-up`} />
+                <Chip color="var(--status-flag)" bg="rgba(255,68,102,0.08)" label={`${followUpCount} flagged`} />
               )}
               {answeredCount > 0 && (
-                <Chip color="#34d399" bg="rgba(52,211,153,0.08)" label={`${answeredCount} done`} />
+                <Chip color="var(--status-done)" bg="rgba(0,255,159,0.08)" label={`${answeredCount} cleared`} />
               )}
             </div>
           </>
         ) : (
-          <h2 style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-tertiary)', margin: 0 }}>
-            Select a form
+          <h2 style={{ fontFamily: "'VT323', monospace", fontSize: 17, color: 'var(--text-tertiary)', margin: 0, letterSpacing: '0.06em' }}>
+            SELECT A QUEST
           </h2>
         )}
       </div>
@@ -112,24 +135,23 @@ const QuestionList: React.FC<QuestionListProps> = ({
         display: 'flex',
         borderBottom: '1px solid var(--border-subtle)',
         padding: '0 8px',
+        flexShrink: 0,
       }}>
         {TABS.map(tab => (
           <button
             key={tab}
             onClick={() => onTabChange(tab)}
             style={{
-              padding: '9px 10px',
-              fontFamily: "'Fira Code', monospace",
-              fontSize: 10,
-              fontWeight: activeTab === tab ? 600 : 400,
+              padding: '7px 10px',
+              fontFamily: "'VT323', monospace",
+              fontSize: 16,
               color: activeTab === tab ? 'var(--accent)' : 'var(--text-muted)',
               background: 'none', border: 'none', cursor: 'pointer',
               borderBottom: `2px solid ${activeTab === tab ? 'var(--accent)' : 'transparent'}`,
-              transition: 'all 0.15s',
-              letterSpacing: '0.02em',
+              letterSpacing: '0.04em',
             }}
           >
-            {tab}
+            {tab === 'Awaiting' ? 'Pending' : tab === 'Answered' ? 'Cleared' : tab}
           </button>
         ))}
       </div>
@@ -137,10 +159,13 @@ const QuestionList: React.FC<QuestionListProps> = ({
       {/* ── Items ── */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {questions.length === 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: 'var(--text-muted)' }}>
-              {isAdmin ? 'No questions yet' : 'No questions'}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 16 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: "'VT323', monospace", fontSize: 32, color: 'var(--text-muted)', marginBottom: 8 }}>[ ]</div>
+              <p style={{ fontFamily: "'VT323', monospace", fontSize: 14, color: 'var(--text-muted)', letterSpacing: '0.06em', margin: 0, textTransform: 'uppercase' }}>
+                {isAdmin ? 'No objectives yet' : 'No objectives'}
+              </p>
+            </div>
           </div>
         ) : (
           questions.map(q => (
@@ -155,45 +180,41 @@ const QuestionList: React.FC<QuestionListProps> = ({
       </div>
 
       {/* ── Footer ── */}
-      <div style={{ borderTop: '1px solid var(--border-subtle)' }}>
+      <div style={{ borderTop: '1px solid var(--border-subtle)', flexShrink: 0 }}>
         {isAdmin && form && (
           <button
             onClick={() => onAddQuestion?.(form.id)}
+            className="pixel-btn"
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 8,
               padding: '10px 16px',
-              background: 'none', border: 'none', cursor: 'pointer',
+              background: 'none', border: 'none',
               borderBottom: '1px solid var(--border-subtle)',
-              color: 'var(--text-muted)',
-              transition: 'all 0.15s',
+              cursor: 'pointer', color: 'var(--text-muted)',
             }}
-            onMouseEnter={e => {
-              const el = e.currentTarget;
-              el.style.color = 'var(--text-secondary)';
-              el.style.background = 'var(--bg-hover)';
-            }}
-            onMouseLeave={e => {
-              const el = e.currentTarget;
-              el.style.color = 'var(--text-muted)';
-              el.style.background = 'none';
-            }}
+            onMouseEnter={e => { const el = e.currentTarget; el.style.color = 'var(--accent)'; el.style.background = 'var(--bg-hover)'; }}
+            onMouseLeave={e => { const el = e.currentTarget; el.style.color = 'var(--text-muted)'; el.style.background = 'none'; }}
           >
             <div style={{
-              width: 18, height: 18, borderRadius: 5,
-              border: '1px dashed var(--border-mid)',
+              width: 18, height: 18,
+              border: '1px solid var(--border-mid)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, lineHeight: 1, flexShrink: 0,
-              transition: 'border-color 0.15s',
+              fontSize: 16, lineHeight: 1, flexShrink: 0,
             }}>+</div>
-            <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 10 }}>
-              Add question
+            <span style={{ fontFamily: "'VT323', monospace", fontSize: 15 }}>
+              New Objective
             </span>
           </button>
         )}
-        <div style={{ padding: '8px 16px' }}>
-          <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
-            {allFormQuestions.length} question{allFormQuestions.length !== 1 ? 's' : ''} total
+        <div style={{ padding: '7px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+            {allFormQuestions.length} OBJECTIVE{allFormQuestions.length !== 1 ? 'S' : ''}
           </span>
+          {allFormQuestions.length > 0 && (
+            <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: isComplete ? 'var(--status-done)' : 'var(--text-muted)' }}>
+              {answeredCount}/{totalCount}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -202,10 +223,11 @@ const QuestionList: React.FC<QuestionListProps> = ({
 
 const Chip: React.FC<{ color: string; bg: string; label: string }> = ({ color, bg, label }) => (
   <span style={{
-    fontFamily: "'Fira Code', monospace", fontSize: 9,
+    fontFamily: "'VT323', monospace", fontSize: 13,
     color, background: bg,
-    padding: '2px 7px', borderRadius: 4,
-    border: `1px solid ${color}30`,
+    padding: '2px 7px',
+    border: `1px solid ${color}`,
+    letterSpacing: '0.04em',
   }}>
     {label}
   </span>

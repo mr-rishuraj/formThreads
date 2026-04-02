@@ -7,8 +7,6 @@ interface MessageBubbleProps {
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isNew = false }) => {
-  // creator = form admin → left side (like received messages in Gmail/iMessage)
-  // respondent = participant → right side (like sent messages)
   const isCreator = message.role === 'creator';
 
   return (
@@ -26,38 +24,40 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isNew = false })
       {/* ── Creator (LEFT) ── */}
       {isCreator && (
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '72%' }}>
-          {/* Avatar */}
+          {/* Square pixel avatar */}
           <div style={{
-            width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+            width: 28, height: 28, flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'Fira Code', monospace", fontSize: 10, fontWeight: 600,
-            background: 'linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%)',
+            fontFamily: "'VT323', monospace", fontSize: 14, fontWeight: 600,
+            background: 'var(--accent)',
+            border: '2px solid var(--accent)',
+            boxShadow: '2px 2px 0 rgba(0,0,0,0.5)',
             color: 'white',
-            boxShadow: '0 2px 8px var(--accent-glow)',
           }}>
             {message.senderInitial}
           </div>
 
           {/* Bubble + meta */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: "'VT323', monospace", fontSize: 15, color: 'var(--text-secondary)' }}>
                 {message.senderName}
               </span>
-              <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
+              <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)' }}>
                 {message.timestamp}
               </span>
             </div>
             <div style={{
               padding: '10px 14px',
-              borderRadius: '3px 12px 12px 12px',
-              fontSize: 13, lineHeight: 1.65,
+              fontSize: 17, lineHeight: 1.5,
+              fontFamily: "'VT323', monospace",
               background: 'var(--bg-elevated)',
               border: '1px solid var(--border-mid)',
+              boxShadow: isNew
+                ? '3px 3px 0 var(--accent-dim)'
+                : '2px 2px 0 rgba(0,0,0,0.3)',
               color: 'var(--text-secondary)',
-              boxShadow: isNew ? '0 2px 12px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.2)',
               wordBreak: 'break-word',
-              letterSpacing: '-0.005em',
             }}>
               {message.content}
             </div>
@@ -70,36 +70,38 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isNew = false })
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '72%' }}>
           {/* Bubble + meta */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexDirection: 'row-reverse' }}>
-              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexDirection: 'row-reverse' }}>
+              <span style={{ fontFamily: "'VT323', monospace", fontSize: 15, color: 'var(--text-secondary)' }}>
                 {message.senderName}
               </span>
-              <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
+              <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)' }}>
                 {message.timestamp}
               </span>
             </div>
             <div style={{
               padding: '10px 14px',
-              borderRadius: '12px 3px 12px 12px',
-              fontSize: 13, lineHeight: 1.65,
+              fontSize: 17, lineHeight: 1.5,
+              fontFamily: "'VT323', monospace",
               background: 'var(--bg-active)',
-              border: '1px solid var(--border-subtle)',
+              border: `1px solid ${isNew ? 'var(--accent)' : 'var(--border-mid)'}`,
+              boxShadow: isNew
+                ? '3px 3px 0 var(--accent-dim)'
+                : '2px 2px 0 rgba(0,0,0,0.3)',
               color: 'var(--text-primary)',
-              boxShadow: isNew ? '0 2px 12px var(--accent-glow)' : '0 1px 4px rgba(0,0,0,0.2)',
               wordBreak: 'break-word',
-              letterSpacing: '-0.005em',
             }}>
               {message.content}
             </div>
           </div>
 
-          {/* Avatar */}
+          {/* Square pixel avatar */}
           <div style={{
-            width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+            width: 28, height: 28, flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'Fira Code', monospace", fontSize: 10, fontWeight: 600,
+            fontFamily: "'VT323', monospace", fontSize: 14, fontWeight: 600,
             background: 'var(--bg-elevated)',
             border: '1px solid var(--border-mid)',
+            boxShadow: '2px 2px 0 rgba(0,0,0,0.3)',
             color: 'var(--text-secondary)',
           }}>
             {message.senderInitial}

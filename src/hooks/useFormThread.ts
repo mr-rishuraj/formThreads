@@ -283,16 +283,23 @@ export function useFormThread({ isAdmin, teamId }: UseFormThreadOptions) {
 
   const updateQuestion = useCallback(
     async (questionId: string, patch: Partial<Pick<Question, 'title' | 'description'>>) => {
+      // Snapshot previous state so we can rollback if the DB write fails
+      const previous = questions.find((q) => q.id === questionId);
       setQuestions((prev) =>
         prev.map((q) => (q.id === questionId ? { ...q, ...patch } : q))
       );
       try {
         await updateQuestionInDB(questionId, patch);
       } catch (e) {
-        console.error('updateQuestion failed:', e);
+        console.error('updateQuestion failed — rolling back:', e);
+        if (previous) {
+          setQuestions((prev) =>
+            prev.map((q) => (q.id === questionId ? previous : q))
+          );
+        }
       }
     },
-    []
+    [questions]
   );
 
   const removeForm = useCallback(async (formId: string) => {

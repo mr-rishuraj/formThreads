@@ -49,12 +49,11 @@ async function fetchUser(supabaseUser: { id: string; email?: string }): Promise<
 }
 
 export function useUser() {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as User) : null;
-    } catch { return null; }
-  });
+  // Always start as null — never read stale data from localStorage.
+  // The auth state change fires immediately on subscription (INITIAL_SESSION),
+  // fetches fresh data from DB, and sets the user. This eliminates all
+  // "need to clear localStorage" issues caused by stale cached role/team data.
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -63,14 +62,12 @@ export function useUser() {
         if (session?.user) {
           try {
             const u = await fetchUser(session.user);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
             setUser(u);
           } catch (e) {
             console.error('fetchUser failed:', e);
             setUser(null);
           }
         } else {
-          localStorage.removeItem(STORAGE_KEY);
           setUser(null);
         }
         setLoading(false);
@@ -84,27 +81,18 @@ export function useUser() {
       const team = await getMyTeam();
       setUser((prev) => {
         if (!prev) return prev;
-        const updated = {
-          ...prev,
-          teamId: team?.id ?? null,
-          teamName: team?.name ?? null,
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
+        return { ...prev, teamId: team?.id ?? null, teamName: team?.name ?? null };
       });
     } catch (_) {}
   }, []);
 
-  // ── NEW: Leave team ────────────────────────────────────────
   const leaveTeam = useCallback(async () => {
     if (!window.confirm('Leave this team? You will need a new code to join another team.')) return;
     try {
       await dbLeaveTeam();
       setUser((prev) => {
         if (!prev) return prev;
-        const updated = { ...prev, teamId: null, teamName: null };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
+        return { ...prev, teamId: null, teamName: null };
       });
     } catch (e) {
       console.error('leaveTeam failed:', e);
@@ -117,6 +105,7 @@ export function useUser() {
 
   const logout = useCallback(async () => {
     await signOut();
+    // Clear any leftover keys from old versions
     localStorage.removeItem(STORAGE_KEY);
     setUser(null);
   }, []);
@@ -125,6 +114,6 @@ export function useUser() {
     user, login, logout, loading,
     isAdmin: user?.role === 'admin',
     refreshTeam,
-    leaveTeam,  // ← NEW
+    leaveTeam,
   };
 }

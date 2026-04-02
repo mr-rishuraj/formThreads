@@ -24,134 +24,174 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       position: 'relative', zIndex: 10,
       height: '100vh',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexDirection: 'column', gap: 20,
     }}>
-      {/* Ambient glow behind card */}
-      <div style={{
-        position: 'absolute',
-        width: 400, height: 400,
-        background: 'radial-gradient(circle, rgba(124,106,255,0.12) 0%, transparent 70%)',
-        borderRadius: '50%',
-        pointerEvents: 'none',
-      }} />
+      {/* Game title above card */}
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          fontFamily: "'Press Start 2P', monospace",
+          fontSize: 28,
+          color: 'var(--accent)',
+          textShadow: '0 0 24px var(--accent-glow), 4px 4px 0 rgba(0,0,0,0.9)',
+          letterSpacing: '0.06em',
+          marginBottom: 10,
+          lineHeight: 1.5,
+        }}>
+          SOLVE FOR<br/>PILANI
+        </div>
+        <div style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 18,
+          color: 'var(--text-muted)',
+          letterSpacing: '0.4em',
+          textTransform: 'uppercase',
+        }}>
+          · · · RESPONSE ENGINE · · ·
+        </div>
+      </div>
 
+      {/* Card */}
       <div className="animate-pop-in" style={{
         width: 380,
         background: 'var(--bg-surface)',
-        border: '1px solid var(--border-mid)',
-        borderRadius: 16,
-        boxShadow: '0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)',
+        border: '2px solid var(--border-mid)',
+        boxShadow: '6px 6px 0 rgba(0,0,0,0.7), 0 0 40px var(--accent-glow)',
         overflow: 'hidden',
         position: 'relative',
       }}>
-        {/* Top gradient stripe */}
-        <div style={{
-          height: 3,
-          background: 'linear-gradient(90deg, var(--accent) 0%, #a78bfa 50%, #60a5fa 100%)',
-        }} />
+        {/* Accent top stripe */}
+        <div style={{ height: 4, background: 'var(--accent)', boxShadow: '0 0 10px var(--accent-glow)' }} />
 
-        {/* Header */}
-        <div style={{ padding: '28px 32px 22px', borderBottom: '1px solid var(--border-subtle)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-            <div style={{
-              width: 34, height: 34,
-              background: 'linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%)',
-              borderRadius: 9,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 16px var(--accent-glow)',
-            }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M2 4h12M2 8h9M2 12h11" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                FormThread
-              </div>
-              <div style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
-                conversational forms
-              </div>
-            </div>
+        {/* Player select header */}
+        <div style={{
+          padding: '20px 28px 16px',
+          borderBottom: '1px solid var(--border-subtle)',
+          background: 'var(--bg-elevated)',
+        }}>
+          <div style={{
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 7,
+            color: 'var(--text-muted)',
+            letterSpacing: '0.2em',
+            marginBottom: 10,
+          }}>
+            ── PLAYER SELECT ──
           </div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.03em', margin: '0 0 4px' }}>
-            Sign in to your workspace
+          <h1 style={{
+            fontFamily: "'VT323', monospace",
+            fontSize: 28, color: 'var(--text-primary)',
+            margin: '0 0 4px', letterSpacing: '0.02em',
+          }}>
+            Sign in to continue
           </h1>
-          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: 'var(--text-muted)', margin: 0 }}>
-            role-based access · real-time threads
+          <p style={{
+            fontFamily: "'VT323', monospace", fontSize: 14,
+            color: 'var(--text-muted)', margin: 0,
+            letterSpacing: '0.1em', textTransform: 'uppercase',
+          }}>
+            Role assigned automatically · Real-time threads
           </p>
         </div>
 
         {/* Body */}
-        <div style={{ padding: '22px 32px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
-            Sign in with your Google account. Your role is assigned automatically based on your account.
-          </p>
+        <div style={{ padding: '20px 28px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Save slot */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '10px 14px',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-mid)',
+            boxShadow: '2px 2px 0 rgba(0,0,0,0.3)',
+          }}>
+            <div style={{
+              width: 40, height: 40,
+              background: 'var(--bg-hover)',
+              border: '2px solid var(--border-mid)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 14, color: 'var(--text-tertiary)' }}>?</span>
+            </div>
+            <div>
+              <div style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)', letterSpacing: '0.1em' }}>SAVE SLOT 1</div>
+              <div style={{ fontFamily: "'VT323', monospace", fontSize: 16, color: 'var(--text-secondary)' }}>Your Google account</div>
+            </div>
+            <div style={{ marginLeft: 'auto', fontFamily: "'VT323', monospace", fontSize: 24, color: 'var(--accent)' }} className="animate-pixel-blink">
+              ▶
+            </div>
+          </div>
 
           {error && (
             <div style={{
-              padding: '10px 12px', borderRadius: 8,
-              background: 'rgba(248,113,113,0.07)',
-              border: '1px solid rgba(248,113,113,0.2)',
+              padding: '10px 12px',
+              background: 'rgba(255,68,102,0.07)',
+              border: '2px solid rgba(255,68,102,0.3)',
+              boxShadow: '2px 2px 0 rgba(0,0,0,0.3)',
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
-              <span style={{ color: '#f87171', fontSize: 12 }}>⚠</span>
-              <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 10, color: '#f87171', margin: 0 }}>
-                {error}
-              </p>
+              <span style={{ fontFamily: "'VT323', monospace", color: 'var(--status-flag)', fontSize: 18, flexShrink: 0 }}>■</span>
+              <p style={{ fontFamily: "'VT323', monospace", fontSize: 14, color: 'var(--status-flag)', margin: 0 }}>{error}</p>
             </div>
           )}
 
-          {/* Google button */}
+          {/* Press Start button */}
           <button
             onClick={handleLogin}
             disabled={loading}
+            className="pixel-btn"
             style={{
-              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              padding: '12px 20px',
-              borderRadius: 10,
-              border: '1px solid var(--border-mid)',
-              background: loading ? 'var(--bg-elevated)' : 'var(--bg-elevated)',
+              width: '100%', padding: '14px 20px',
+              border: `2px solid ${loading ? 'var(--border-mid)' : 'var(--accent)'}`,
+              background: loading ? 'var(--bg-elevated)' : 'var(--accent)',
               cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.15s',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+              boxShadow: loading ? 'none' : '4px 4px 0 rgba(0,0,0,0.5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             }}
             onMouseEnter={e => {
               if (!loading) {
-                e.currentTarget.style.borderColor = 'var(--border-strong)';
-                e.currentTarget.style.background = 'var(--bg-hover)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+                e.currentTarget.style.background = 'var(--accent-hover)';
+                e.currentTarget.style.boxShadow = '5px 5px 0 rgba(0,0,0,0.6)';
               }
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'var(--border-mid)';
-              e.currentTarget.style.background = 'var(--bg-elevated)';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)';
+              if (!loading) {
+                e.currentTarget.style.background = 'var(--accent)';
+                e.currentTarget.style.boxShadow = '4px 4px 0 rgba(0,0,0,0.5)';
+              }
             }}
           >
             {loading ? (
               <>
                 <LoadingSpinner />
-                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', letterSpacing: '-0.01em' }}>
-                  Redirecting to Google…
+                <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: 'var(--text-secondary)', letterSpacing: '0.05em' }}>
+                  Loading…
                 </span>
               </>
             ) : (
               <>
                 <GoogleIcon />
-                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
-                  Continue with Google
+                <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: 'white', letterSpacing: '0.05em' }}>
+                  Press Start
                 </span>
               </>
             )}
           </button>
 
-          <p style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.6, margin: 0 }}>
-            By continuing you agree to the Terms of Service.<br/>
-            Role is assigned based on your account.
+          <p style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.5, margin: 0, letterSpacing: '0.05em' }}>
+            BY CONTINUING YOU AGREE TO THE TERMS.<br/>
+            ROLE IS ASSIGNED BASED ON YOUR ACCOUNT.
           </p>
         </div>
       </div>
+
+      {/* Blinking insert coin */}
+      <p style={{
+        fontFamily: "'Press Start 2P', monospace",
+        fontSize: 7, color: 'var(--text-muted)',
+        letterSpacing: '0.1em', margin: 0,
+      }} className="animate-pixel-blink">
+        INSERT COIN TO CONTINUE
+      </p>
     </div>
   );
 };
@@ -168,7 +208,7 @@ const GoogleIcon = () => (
 const LoadingSpinner = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" className="animate-spin">
     <circle cx="7" cy="7" r="5.5" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none"/>
-    <path d="M7 1.5A5.5 5.5 0 0112.5 7" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    <path d="M7 1.5A5.5 5.5 0 0112.5 7" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
   </svg>
 );
 

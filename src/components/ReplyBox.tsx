@@ -52,33 +52,32 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({ onSend, respondentName, respondentI
 
   return (
     <div style={{
-      border: `1px solid ${isFocused ? 'var(--accent-dim)' : 'var(--border-mid)'}`,
-      borderRadius: 12,
+      border: `2px solid ${isFocused ? 'var(--accent)' : 'var(--border-mid)'}`,
       background: 'var(--bg-elevated)',
-      transition: 'all 0.2s ease',
       boxShadow: isFocused
-        ? '0 0 0 3px var(--accent-soft), 0 4px 16px rgba(0,0,0,0.3)'
-        : '0 2px 8px rgba(0,0,0,0.2)',
+        ? '4px 4px 0 var(--accent-dim)'
+        : '3px 3px 0 rgba(0,0,0,0.4)',
       overflow: 'hidden',
     }}>
       {/* Replying-as row */}
       <div style={{
         padding: '10px 14px 6px',
-        display: 'flex', alignItems: 'center', gap: 7,
+        display: 'flex', alignItems: 'center', gap: 8,
         borderBottom: '1px solid var(--border-subtle)',
       }}>
+        {/* Square pixel mini-avatar */}
         <div style={{
-          width: 18, height: 18, borderRadius: 5,
+          width: 20, height: 20,
           background: 'var(--bg-hover)',
           border: '1px solid var(--border-mid)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: "'Fira Code', monospace", fontSize: 8, fontWeight: 600,
+          fontFamily: "'VT323', monospace", fontSize: 12,
           color: 'var(--text-tertiary)', flexShrink: 0,
         }}>
           {respondentInitial}
         </div>
-        <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
-          Replying as <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{respondentName}</span>
+        <span style={{ fontFamily: "'VT323', monospace", fontSize: 14, color: 'var(--text-muted)' }}>
+          Replying as <span style={{ color: 'var(--text-secondary)' }}>{respondentName}</span>
         </span>
       </div>
 
@@ -99,10 +98,10 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({ onSend, respondentName, respondentI
           background: 'transparent',
           border: 'none', outline: 'none',
           padding: '10px 14px',
-          fontFamily: "'Outfit', system-ui, sans-serif",
-          fontSize: 13, color: 'var(--text-primary)',
+          fontFamily: "'VT323', monospace",
+          fontSize: 18, color: 'var(--text-primary)',
           resize: 'none', minHeight: 68, maxHeight: 160,
-          lineHeight: 1.6, letterSpacing: '-0.01em',
+          lineHeight: 1.5,
           opacity: sending ? 0.5 : 1,
         }}
       />
@@ -113,39 +112,37 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({ onSend, respondentName, respondentI
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         borderTop: '1px solid var(--border-subtle)',
       }}>
-        <span style={{ fontFamily: "'Fira Code', monospace", fontSize: 9, color: 'var(--text-muted)' }}>
+        <span style={{ fontFamily: "'VT323', monospace", fontSize: 14, color: 'var(--text-muted)' }}>
           {sending ? 'Sending…' : '⌘↵ send'}
         </span>
 
         <button
           onClick={handleSend}
           disabled={!canSend}
+          className="pixel-btn"
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '7px 16px',
-            borderRadius: 8,
-            border: 'none',
-            background: canSend
-              ? 'linear-gradient(135deg, var(--accent) 0%, #8b7cf6 100%)'
-              : 'var(--bg-hover)',
+            padding: '6px 16px',
+            border: `2px solid ${canSend ? 'var(--accent)' : 'var(--border-subtle)'}`,
+            background: canSend ? 'var(--accent)' : 'var(--bg-hover)',
             color: canSend ? 'white' : 'var(--text-muted)',
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: 12, fontWeight: 600,
+            fontFamily: "'VT323', monospace",
+            fontSize: 16,
             cursor: canSend ? 'pointer' : 'not-allowed',
-            transition: 'all 0.15s',
-            boxShadow: canSend ? '0 2px 8px var(--accent-glow)' : 'none',
-            letterSpacing: '-0.01em',
+            boxShadow: canSend ? '3px 3px 0 rgba(0,0,0,0.4)' : 'none',
             opacity: sending ? 0.7 : 1,
           }}
           onMouseEnter={e => {
             if (canSend) {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 14px var(--accent-glow)';
+              e.currentTarget.style.background = 'var(--accent-hover)';
+              e.currentTarget.style.boxShadow = '4px 4px 0 rgba(0,0,0,0.5)';
             }
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = canSend ? '0 2px 8px var(--accent-glow)' : 'none';
+            if (canSend) {
+              e.currentTarget.style.background = 'var(--accent)';
+              e.currentTarget.style.boxShadow = '3px 3px 0 rgba(0,0,0,0.4)';
+            }
           }}
         >
           {sending ? (
@@ -156,8 +153,8 @@ const ReplyBox: React.FC<ReplyBoxProps> = ({ onSend, respondentName, respondentI
           ) : (
             <>
               <span>Send Reply</span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M1.5 6h9M6.5 2L10.5 6L6.5 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                <path d="M1.5 6h9M6.5 2L10.5 6L6.5 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square" strokeLinejoin="miter"/>
               </svg>
             </>
           )}
