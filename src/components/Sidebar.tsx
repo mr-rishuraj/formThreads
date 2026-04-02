@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const xpPct = totalQ > 0 ? Math.round((answeredQ / totalQ) * 100) : 0;
   // Progress within current level bracket
   const prevMin = rank.level === 1 ? 0 : [0,200,500,1000,2000,4000,8000][rank.level - 1];
-  const levelPct = rank.level === 7 ? 100 : Math.min(100, Math.round(((score - prevMin) / (rank.next - prevMin)) * 100));
+  // const levelPct = rank.level === 7 ? 100 : Math.min(100, Math.round(((score - prevMin) / (rank.next - prevMin)) * 100));
 
   const handleCreate = () => {
     const name = newFormName.trim();
