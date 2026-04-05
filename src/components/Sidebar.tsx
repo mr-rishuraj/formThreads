@@ -23,11 +23,11 @@ const STATUS_COLOR: Record<TeamQuestion['status'], string> = {
   draft:     'var(--status-flag)',
 };
 
-const STATUS_BG: Record<TeamQuestion['status'], string> = {
-  pending:   'rgba(255,255,255,0.04)',
-  completed: 'rgba(255,255,255,0.07)',
-  draft:     'rgba(255,255,255,0.02)',
-};
+// const STATUS_BG: Record<TeamQuestion['status'], string> = {
+//   pending:   'rgba(255,255,255,0.04)',
+//   completed: 'rgba(255,255,255,0.07)',
+//   draft:     'rgba(255,255,255,0.02)',
+// };
 
 const GROUPS: { label: string; status: TeamQuestion['status'] }[] = [
   { label: 'Not Seen', status: 'pending' },
