@@ -48,8 +48,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     selectTeam, selectTQ,
     createTeam, removeTeam,
     createQuestion, editQuestion, removeQuestion,
-    assignToTeams, unassignFromTeam, getAssigned,
-    updateStatus, sendReply,
+    assignToTeams, updateStatus, sendReply,
   } = useAdminData();
 
   if (loadingTeams) return <LoadingScreen message="Loading…" />;
