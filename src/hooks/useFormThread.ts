@@ -8,6 +8,7 @@ import {
   sendMessage,
   getParticipantInfo,
   getFormsForMyTeam,
+  getFormsForTeam,
   deleteForm as dbDeleteForm,
 } from '../queries/forms';
 import { supabase } from '../lib/supabase';
@@ -25,6 +26,8 @@ export function useFormThread({ isAdmin, teamId }: UseFormThreadOptions) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [teamFormIds, setTeamFormIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'All' | 'Awaiting' | 'Answered'>('All');
   const [loadingForms, setLoadingForms] = useState(true);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
@@ -281,6 +284,38 @@ export function useFormThread({ isAdmin, teamId }: UseFormThreadOptions) {
     }
   }, [questions]);
 
+  // ── Admin: select a team and load its questions ───────────────
+  const selectTeam = useCallback(async (teamId: string) => {
+    setSelectedTeamId(teamId);
+    setSelectedQuestionId(null);
+    setLoadingQuestions(true);
+    try {
+      const formIds = await getFormsForTeam(teamId);
+      setTeamFormIds(formIds);
+      const allQ = await Promise.all(formIds.map(fid => getQuestions(fid)));
+      const combined = allQ.flat();
+      setQuestions(prev => {
+        const otherFormQuestions = prev.filter(q => !formIds.includes(q.formId));
+        return [...otherFormQuestions, ...combined];
+      });
+      if (combined.length > 0) setSelectedQuestionId(combined[0].id);
+    } catch (e) {
+      console.error('selectTeam failed:', e);
+    } finally {
+      setLoadingQuestions(false);
+    }
+  }, []);
+
+  // ── Admin: update question status ─────────────────────────────
+  const updateQuestionStatus = useCallback(async (questionId: string, status: Question['status']) => {
+    setQuestions(prev => prev.map(q => q.id === questionId ? { ...q, status } : q));
+    try {
+      await updateQuestionInDB(questionId, { status });
+    } catch (e) {
+      console.error('updateQuestionStatus failed:', e);
+    }
+  }, []);
+
   const updateQuestion = useCallback(
     async (questionId: string, patch: Partial<Pick<Question, 'title' | 'description'>>) => {
       // Snapshot previous state so we can rollback if the DB write fails
@@ -318,11 +353,16 @@ export function useFormThread({ isAdmin, teamId }: UseFormThreadOptions) {
     }
   }, [selectedFormId]);
 
+  // Questions visible in admin team view
+  const teamQuestions = questions.filter(q => teamFormIds.includes(q.formId));
+
   return {
     forms, visibleQuestions, allQuestions: questions,
+    teamQuestions, teamFormIds,
     selectedForm, selectedQuestion, selectedFormId, selectedQuestionId,
-    activeTab, setActiveTab, selectForm, selectQuestion,
-    sendReply, unreadCount, createForm, addQuestion, updateQuestion,
+    selectedTeamId,
+    activeTab, setActiveTab, selectForm, selectQuestion, selectTeam,
+    sendReply, unreadCount, createForm, addQuestion, updateQuestion, updateQuestionStatus,
     loadingForms, loadingQuestions,
     setForms,
     removeForm,

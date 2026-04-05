@@ -82,6 +82,7 @@ function mapTeam(db: DBTeam): Team {
     id: db.id,
     name: db.name,
     code: db.code,
+    accessKey: (db as any).access_key ?? '',
     createdBy: db.created_by,
     createdAt: db.created_at.split('T')[0],
   };
@@ -142,10 +143,19 @@ export async function createQuestion(formId: string, title: string, orderIndex: 
 
 export async function updateQuestionInDB(
   questionId: string,
-  patch: { title?: string; description?: string }
+  patch: { title?: string; description?: string; status?: string }
 ): Promise<void> {
   const { error } = await supabase.from('questions').update(patch).eq('id', questionId);
   if (error) throw error;
+}
+
+export async function getFormsForTeam(teamId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('form_teams')
+    .select('form_id')
+    .eq('team_id', teamId);
+  if (error) throw error;
+  return (data ?? []).map((r: { form_id: string }) => r.form_id);
 }
 
 // ── Messages ──────────────────────────────────────────────────
@@ -200,7 +210,7 @@ export async function getParticipantInfo(
 export async function getAllTeams(): Promise<Team[]> {
   const { data, error } = await supabase
     .from('teams')
-    .select('id, name, code, created_by, created_at')
+    .select('id, name, code, access_key, created_by, created_at')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data as DBTeam[]).map(mapTeam);
@@ -213,7 +223,7 @@ export async function getMyTeam(): Promise<Team | null> {
 
   const { data, error } = await supabase
     .from('team_members')
-    .select('team_id, teams(id, name, code, created_by, created_at)')
+    .select('team_id, teams(id, name, code, access_key, created_by, created_at)')
     .eq('user_id', user.id)
     .limit(1);
 
@@ -227,6 +237,7 @@ export async function getMyTeam(): Promise<Team | null> {
     id: team.id,
     name: team.name,
     code: team.code,
+    accessKey: team.access_key ?? '',
     createdBy: team.created_by,
     createdAt: team.created_at?.split('T')[0] ?? '',
   };
@@ -235,7 +246,7 @@ export async function getMyTeam(): Promise<Team | null> {
 export async function getTeamByCode(code: string): Promise<Team | null> {
   const { data, error } = await supabase
     .from('teams')
-    .select('id, name, code, created_by, created_at')
+    .select('id, name, code, access_key, created_by, created_at')
     .eq('code', code.trim().toUpperCase())
     .single();
   if (error || !data) return null;
@@ -256,7 +267,7 @@ export async function createTeam(name: string): Promise<Team> {
   const { data, error } = await supabase
     .from('teams')
     .insert({ name: name.trim(), code, created_by: user.id })
-    .select('id, name, code, created_by, created_at')
+    .select('id, name, code, access_key, created_by, created_at')
     .single();
   if (error) throw error;
   return mapTeam(data as DBTeam);

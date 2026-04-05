@@ -9,6 +9,7 @@ interface ThreadViewProps {
   form: Form | null;
   onSendReply: (questionId: string, content: string) => Promise<void> | void;
   onUpdateQuestion?: (id: string, patch: Partial<Pick<Question, 'title' | 'description'>>) => void;
+  onUpdateStatus?: (id: string, status: Question['status']) => void;
   user: User;
 }
 
@@ -94,7 +95,7 @@ const EditableField: React.FC<EditableFieldProps> = ({ value, placeholder, onSav
 };
 
 // ── ThreadView ────────────────────────────────────────────────
-const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, onUpdateQuestion, user }) => {
+const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, onUpdateQuestion, onUpdateStatus, user }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isAdmin = user.role === 'admin';
   const { messages, loading: messagesLoading } = useMessages(question?.id ?? null);
@@ -286,6 +287,69 @@ const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, on
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* ── Admin status controls ── */}
+      {isAdmin && onUpdateStatus && (
+        <div style={{
+          padding: '8px 24px',
+          borderTop: '1px solid var(--border-subtle)',
+          background: 'var(--bg-surface)',
+          display: 'flex', gap: 8, alignItems: 'center',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 4 }}>
+            Mark as:
+          </span>
+          <button
+            onClick={() => onUpdateStatus(question.id, 'answered')}
+            disabled={question.status === 'answered'}
+            className="pixel-btn"
+            style={{
+              padding: '4px 14px',
+              fontFamily: "'VT323', monospace", fontSize: 15,
+              background: question.status === 'answered' ? 'rgba(0,255,159,0.12)' : 'transparent',
+              border: `1px solid ${question.status === 'answered' ? 'var(--status-done)' : 'rgba(0,255,159,0.3)'}`,
+              color: 'var(--status-done)',
+              cursor: question.status === 'answered' ? 'default' : 'pointer',
+              opacity: question.status === 'answered' ? 0.6 : 1,
+            }}
+          >
+            Completed
+          </button>
+          <button
+            onClick={() => onUpdateStatus(question.id, 'unanswered')}
+            disabled={question.status === 'unanswered'}
+            className="pixel-btn"
+            style={{
+              padding: '4px 14px',
+              fontFamily: "'VT323', monospace", fontSize: 15,
+              background: question.status === 'unanswered' ? 'rgba(255,215,0,0.10)' : 'transparent',
+              border: `1px solid ${question.status === 'unanswered' ? 'var(--status-wait)' : 'rgba(255,215,0,0.3)'}`,
+              color: 'var(--status-wait)',
+              cursor: question.status === 'unanswered' ? 'default' : 'pointer',
+              opacity: question.status === 'unanswered' ? 0.6 : 1,
+            }}
+          >
+            Pending
+          </button>
+          <button
+            onClick={() => onUpdateStatus(question.id, 'needs-clarification')}
+            disabled={question.status === 'needs-clarification'}
+            className="pixel-btn"
+            style={{
+              padding: '4px 14px',
+              fontFamily: "'VT323', monospace", fontSize: 15,
+              background: question.status === 'needs-clarification' ? 'rgba(255,68,102,0.10)' : 'transparent',
+              border: `1px solid ${question.status === 'needs-clarification' ? 'var(--status-flag)' : 'rgba(255,68,102,0.3)'}`,
+              color: 'var(--status-flag)',
+              cursor: question.status === 'needs-clarification' ? 'default' : 'pointer',
+              opacity: question.status === 'needs-clarification' ? 0.6 : 1,
+            }}
+          >
+            Draft
+          </button>
+        </div>
+      )}
 
       {/* ── Reply box ── */}
       <div style={{
