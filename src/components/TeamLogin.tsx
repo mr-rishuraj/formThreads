@@ -49,7 +49,7 @@ const TeamLogin: React.FC<TeamLoginProps> = ({ onLogin, onSwitchToAdmin, error, 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <div style={{
               width: 32, height: 32,
-              background: 'var(--accent)',
+              background: '#1a1a1a',
               border: '2px solid var(--accent)',
               boxShadow: '3px 3px 0 rgba(0,0,0,0.5), 0 0 12px var(--accent-glow)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -130,7 +130,7 @@ const TeamLogin: React.FC<TeamLoginProps> = ({ onLogin, onSwitchToAdmin, error, 
             className="pixel-btn"
             style={{
               padding: '12px',
-              background: name.trim() && key.trim() && !loading ? 'var(--accent)' : 'var(--bg-elevated)',
+              background: name.trim() && key.trim() && !loading ? '#1a1a1a' : 'var(--bg-elevated)',
               border: `2px solid ${name.trim() && key.trim() && !loading ? 'var(--accent)' : 'var(--border-mid)'}`,
               color: name.trim() && key.trim() && !loading ? 'white' : 'var(--text-muted)',
               fontFamily: "'VT323', monospace", fontSize: 18,

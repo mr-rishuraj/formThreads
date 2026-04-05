@@ -73,7 +73,7 @@ const CreateFormModal: React.FC<CreateFormModalProps> = ({ onConfirm, onClose })
         boxShadow: '0 24px 64px rgba(0,0,0,0.8)',
         overflow: 'hidden',
       }}>
-        <div style={{ height: 2, background: 'linear-gradient(90deg, var(--accent), #a78bfa)' }} />
+        <div style={{ height: 2, background: '#333333' }} />
 
         {/* Header */}
         <div style={{
@@ -235,7 +235,7 @@ const CreateFormModal: React.FC<CreateFormModalProps> = ({ onConfirm, onClose })
                 padding: '8px 18px',
                 fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600,
                 color: 'white',
-                background: 'linear-gradient(135deg, var(--accent) 0%, #8b7cf6 100%)',
+                background: '#1a1a1a',
                 border: 'none',
                 borderRadius: 8, cursor: 'pointer',
                 transition: 'all 0.12s',

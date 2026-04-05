@@ -62,7 +62,7 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ onConfirm, onClose })
         boxShadow: '0 24px 64px rgba(0,0,0,0.8)',
         overflow: 'hidden',
       }}>
-        <div style={{ height: 2, background: 'linear-gradient(90deg, var(--accent), #a78bfa)' }} />
+        <div style={{ height: 2, background: '#333333' }} />
 
         {/* Header */}
         <div style={{
@@ -141,7 +141,7 @@ const CreateTeamModal: React.FC<CreateTeamModalProps> = ({ onConfirm, onClose })
                   width: '100%', padding: '10px',
                   fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600,
                   color: 'white', letterSpacing: '-0.01em',
-                  background: 'linear-gradient(135deg, var(--accent) 0%, #8b7cf6 100%)',
+                  background: '#1a1a1a',
                   border: 'none', borderRadius: 8, cursor: 'pointer',
                   boxShadow: '0 2px 10px var(--accent-glow)',
                   transition: 'all 0.15s',

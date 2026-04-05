@@ -92,8 +92,8 @@ const AdminTeamManager: React.FC<AdminTeamManagerProps> = ({
   const btnStyle = (active?: boolean): React.CSSProperties => ({
     padding: '4px 12px',
     fontFamily: "'VT323', monospace", fontSize: 14,
-    background: active ? 'var(--accent)' : 'var(--bg-base)',
-    border: `1px solid ${active ? 'var(--accent)' : 'var(--border-mid)'}`,
+    background: active ? '#1a1a1a' : 'var(--bg-base)',
+    border: `1px solid ${active ? '#ffffff' : 'var(--border-mid)'}`,
     color: active ? 'white' : 'var(--text-muted)',
     cursor: 'pointer',
   });

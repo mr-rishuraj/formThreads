@@ -19,7 +19,7 @@ const LoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading…' 
   }}>
     <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
       <div style={{
-        width: 40, height: 40, background: 'var(--accent)',
+        width: 40, height: 40, background: '#1a1a1a',
         border: '2px solid var(--accent)',
         boxShadow: '4px 4px 0 rgba(0,0,0,0.6), 0 0 20px var(--accent-glow)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',

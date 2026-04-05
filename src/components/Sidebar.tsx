@@ -101,7 +101,7 @@ const ParticipantNav: React.FC<ParticipantNavProps> = ({
           {totalUnread > 0 && (
             <span style={{
               fontFamily: "'VT323', monospace", fontSize: 12,
-              background: 'var(--accent)', color: 'white',
+              background: '#1a1a1a', color: 'white',
               padding: '1px 6px', minWidth: 18, textAlign: 'center',
             }}>{totalUnread}</span>
           )}
@@ -187,7 +187,7 @@ const ParticipantNav: React.FC<ParticipantNavProps> = ({
                         ) : q.unread ? (
                           <span style={{
                             width: 7, height: 7,
-                            background: 'var(--accent)',
+                            background: '#1a1a1a',
                             display: 'inline-block', flexShrink: 0,
                           }} />
                         ) : null}
@@ -233,7 +233,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 30, height: 30,
-            background: 'var(--accent)',
+            background: '#1a1a1a',
             border: '2px solid var(--accent)',
             boxShadow: '3px 3px 0 rgba(0,0,0,0.5)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',

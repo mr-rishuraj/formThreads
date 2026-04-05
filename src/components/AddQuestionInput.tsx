@@ -118,7 +118,7 @@ const AddQuestionInput: React.FC<AddQuestionInputProps> = ({ onAdd }) => {
               padding: '5px 12px',
               fontFamily: "'Fira Code', monospace", fontSize: 9, fontWeight: 600,
               color: value.trim() ? 'white' : 'var(--text-muted)',
-              background: value.trim() ? 'var(--accent)' : 'var(--bg-elevated)',
+              background: value.trim() ? '#1a1a1a' : 'var(--bg-elevated)',
               border: 'none', borderRadius: 6,
               cursor: value.trim() ? 'pointer' : 'not-allowed',
               transition: 'all 0.12s',

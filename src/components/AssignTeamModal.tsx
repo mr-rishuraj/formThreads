@@ -52,7 +52,7 @@ const AssignTeamModal: React.FC<AssignTeamModalProps> = ({
         boxShadow: '0 24px 64px rgba(0,0,0,0.8)',
         overflow: 'hidden',
       }}>
-        <div style={{ height: 2, background: 'linear-gradient(90deg, var(--accent), #a78bfa)' }} />
+        <div style={{ height: 2, background: '#333333' }} />
 
         {/* Header */}
         <div style={{
@@ -116,7 +116,7 @@ const AssignTeamModal: React.FC<AssignTeamModalProps> = ({
                     <div style={{
                       width: 18, height: 18, borderRadius: 5, flexShrink: 0,
                       border: `1.5px solid ${isAssigned ? 'var(--accent)' : 'var(--border-mid)'}`,
-                      background: isAssigned ? 'var(--accent)' : 'transparent',
+                      background: isAssigned ? '#1a1a1a' : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       transition: 'all 0.15s',
                       boxShadow: isAssigned ? '0 0 6px var(--accent-glow)' : 'none',
@@ -158,7 +158,7 @@ const AssignTeamModal: React.FC<AssignTeamModalProps> = ({
               padding: '8px 18px',
               fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600,
               color: 'white',
-              background: 'linear-gradient(135deg, var(--accent) 0%, #8b7cf6 100%)',
+              background: '#1a1a1a',
               border: 'none', borderRadius: 8, cursor: 'pointer',
               letterSpacing: '-0.01em',
               boxShadow: '0 2px 8px var(--accent-glow)',
