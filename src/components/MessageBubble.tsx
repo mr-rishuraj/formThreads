@@ -6,108 +6,81 @@ interface MessageBubbleProps {
   isNew?: boolean;
 }
 
+const AVATAR_COLORS = ['#1a1a1a','#2e2e2e','#3a3a3a','#484848','#222222','#333333'];
+function avatarColor(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isNew = false }) => {
   const isCreator = message.role === 'creator';
 
   return (
     <div
-      className={isNew ? 'animate-fade-up' : ''}
       style={{
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: isCreator ? 'flex-start' : 'flex-end',
-        alignItems: 'flex-end',
-        gap: 0,
-        width: '100%',
+        background: '#ffffff',
+        borderRadius: 8,
+        border: `1px solid ${isNew ? "rgba(255,255,255,0.25)" : '#e0e0e0'}`,
+        padding: '14px 18px',
+        display: 'flex', gap: 14, alignItems: 'flex-start',
+        boxShadow: isNew ? '0 1px 6px rgba(0,0,0,0.12)' : 'none',
+        animation: isNew ? 'gmailFadeUp 0.2s ease forwards' : 'none',
       }}
     >
-      {/* ── Creator (LEFT) ── */}
-      {isCreator && (
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '72%' }}>
-          {/* Square pixel avatar */}
-          <div style={{
-            width: 28, height: 28, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'VT323', monospace", fontSize: 14, fontWeight: 600,
-            background: 'var(--accent)',
-            border: '2px solid var(--accent)',
-            boxShadow: '2px 2px 0 rgba(0,0,0,0.5)',
-            color: 'white',
-          }}>
-            {message.senderInitial}
-          </div>
+      {/* Circular avatar */}
+      <div style={{
+        width: 36, height: 36, borderRadius: '50%',
+        background: avatarColor(message.senderName),
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#fff',
+        fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+        fontSize: 15, fontWeight: 500, flexShrink: 0,
+        userSelect: 'none',
+      }}>
+        {message.senderInitial}
+      </div>
 
-          {/* Bubble + meta */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: "'VT323', monospace", fontSize: 15, color: 'var(--text-secondary)' }}>
-                {message.senderName}
-              </span>
-              <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)' }}>
-                {message.timestamp}
-              </span>
-            </div>
-            <div style={{
-              padding: '10px 14px',
-              fontSize: 17, lineHeight: 1.5,
-              fontFamily: "'VT323', monospace",
-              background: 'var(--bg-elevated)',
-              border: '1px solid var(--border-mid)',
-              boxShadow: isNew
-                ? '3px 3px 0 var(--accent-dim)'
-                : '2px 2px 0 rgba(0,0,0,0.3)',
-              color: 'var(--text-secondary)',
-              wordBreak: 'break-word',
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          display: 'flex', alignItems: 'baseline',
+          justifyContent: 'space-between', marginBottom: 4,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+              fontWeight: 600, fontSize: 14, color: '#202124',
             }}>
-              {message.content}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Respondent (RIGHT) ── */}
-      {!isCreator && (
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '72%' }}>
-          {/* Bubble + meta */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexDirection: 'row-reverse' }}>
-              <span style={{ fontFamily: "'VT323', monospace", fontSize: 15, color: 'var(--text-secondary)' }}>
-                {message.senderName}
+              {message.senderName}
+            </span>
+            {isCreator && (
+              <span style={{
+                fontSize: 11, fontWeight: 500,
+                color: '#ffffff', background: '#333333',
+                borderRadius: 4, padding: '1px 6px',
+              }}>
+                Admin
               </span>
-              <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)' }}>
-                {message.timestamp}
-              </span>
-            </div>
-            <div style={{
-              padding: '10px 14px',
-              fontSize: 17, lineHeight: 1.5,
-              fontFamily: "'VT323', monospace",
-              background: 'var(--bg-active)',
-              border: `1px solid ${isNew ? 'var(--accent)' : 'var(--border-mid)'}`,
-              boxShadow: isNew
-                ? '3px 3px 0 var(--accent-dim)'
-                : '2px 2px 0 rgba(0,0,0,0.3)',
-              color: 'var(--text-primary)',
-              wordBreak: 'break-word',
-            }}>
-              {message.content}
-            </div>
+            )}
           </div>
-
-          {/* Square pixel avatar */}
-          <div style={{
-            width: 28, height: 28, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'VT323', monospace", fontSize: 14, fontWeight: 600,
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--border-mid)',
-            boxShadow: '2px 2px 0 rgba(0,0,0,0.3)',
-            color: 'var(--text-secondary)',
+          <span style={{
+            fontFamily: 'Roboto, Arial, sans-serif',
+            fontSize: 12, color: '#5f6368',
+            whiteSpace: 'nowrap', marginLeft: 8,
           }}>
-            {message.senderInitial}
-          </div>
+            {message.timestamp}
+          </span>
         </div>
-      )}
+        <p style={{
+          fontFamily: 'Roboto, Arial, sans-serif',
+          fontSize: 14, color: '#3c4043',
+          lineHeight: 1.6, margin: 0,
+          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        }}>
+          {message.content}
+        </p>
+      </div>
     </div>
   );
 };

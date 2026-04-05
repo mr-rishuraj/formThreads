@@ -14,9 +14,9 @@ interface ThreadViewProps {
 }
 
 const STATUS_CONFIG = {
-  answered:             { label: 'Answered',       bg: 'rgba(0,255,159,0.07)',   text: 'var(--status-done)', border: 'rgba(0,255,159,0.3)',   dot: 'var(--status-done)' },
-  unanswered:           { label: 'Awaiting reply',  bg: 'rgba(255,215,0,0.07)',   text: 'var(--status-wait)', border: 'rgba(255,215,0,0.3)',   dot: 'var(--status-wait)' },
-  'needs-clarification':{ label: 'Follow-up needed',bg: 'rgba(255,68,102,0.07)', text: 'var(--status-flag)', border: 'rgba(255,68,102,0.3)',  dot: 'var(--status-flag)' },
+  answered:             { label: 'Sent',     bg: '#e8e8e8', color: '#1a1a1a' },
+  unanswered:           { label: 'Not Seen', bg: '#f1f1f1', color: '#555555' },
+  'needs-clarification':{ label: 'Draft',    bg: '#f5f5f5', color: '#333333' },
 } as const;
 
 // ── Editable Field ────────────────────────────────────────────
@@ -49,21 +49,27 @@ const EditableField: React.FC<EditableFieldProps> = ({ value, placeholder, onSav
   if (editing) {
     const baseStyle: React.CSSProperties = {
       width: '100%',
-      background: 'var(--bg-elevated)',
-      border: '2px solid var(--accent-dim)',
-      color: 'var(--text-primary)',
+      background: '#fff',
+      border: '1px solid rgba(255,255,255,0.25)',
+      borderRadius: 6,
+      color: '#202124',
       outline: 'none',
-      fontFamily: "'VT323', monospace",
+      fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+      boxShadow: '0 0 0 2px rgba(0,0,0,0.15)',
       ...style,
     };
     return multiline
       ? <textarea autoFocus rows={3} value={draft} onChange={e => setDraft(e.target.value)}
-          onKeyDown={handleKeyDown} onBlur={(e) => { const rel = e.relatedTarget as HTMLElement | null; if (rel && (rel.tagName === 'BUTTON' || rel.closest('button'))) return; commit(); }} placeholder={placeholder}
-          style={{ ...baseStyle, padding: '8px 10px', resize: 'none', lineHeight: 1.5 }}
+          onKeyDown={handleKeyDown}
+          onBlur={(e) => { const rel = e.relatedTarget as HTMLElement | null; if (rel && (rel.tagName === 'BUTTON' || rel.closest('button'))) return; commit(); }}
+          placeholder={placeholder}
+          style={{ ...baseStyle, padding: '8px 10px', resize: 'none', lineHeight: 1.6 }}
         />
       : <input autoFocus type="text" value={draft} onChange={e => setDraft(e.target.value)}
-          onKeyDown={handleKeyDown} onBlur={(e) => { const rel = e.relatedTarget as HTMLElement | null; if (rel && (rel.tagName === 'BUTTON' || rel.closest('button'))) return; commit(); }} placeholder={placeholder}
-          style={{ ...baseStyle, padding: '3px 8px' }}
+          onKeyDown={handleKeyDown}
+          onBlur={(e) => { const rel = e.relatedTarget as HTMLElement | null; if (rel && (rel.tagName === 'BUTTON' || rel.closest('button'))) return; commit(); }}
+          placeholder={placeholder}
+          style={{ ...baseStyle, padding: '4px 10px' }}
         />;
   }
 
@@ -73,21 +79,21 @@ const EditableField: React.FC<EditableFieldProps> = ({ value, placeholder, onSav
       title="Click to edit"
       style={{
         cursor: 'text', position: 'relative',
-        padding: '2px 4px', margin: '-2px -4px',
+        padding: '3px 6px', margin: '-3px -6px',
+        borderRadius: 4,
         ...style,
       }}
-      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'}
+      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#f1f3f4'}
       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
     >
       {value ? (
         <span>{value}</span>
       ) : (
-        <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>{placeholder}</span>
+        <span style={{ color: '#9aa0a6', fontStyle: 'italic' }}>{placeholder}</span>
       )}
       <span style={{
-        position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
-        fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--accent)',
-        opacity: 0,
+        position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+        fontSize: 12, color: '#111111', opacity: 0,
         pointerEvents: 'none', userSelect: 'none',
       }} className="edit-pencil">✎</span>
     </div>
@@ -108,25 +114,23 @@ const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, on
     return (
       <div style={{
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'var(--bg-base)',
+        background: '#f6f8fc',
       }}>
         <div style={{ textAlign: 'center', maxWidth: 280 }}>
-          <div style={{
-            width: 56, height: 56,
-            background: 'var(--bg-elevated)',
-            border: '2px solid var(--border-mid)',
-            boxShadow: '4px 4px 0 rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px',
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16 }}>
+            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"
+                  fill="#dadce0"/>
+          </svg>
+          <p style={{
+            fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+            fontSize: 16, color: '#5f6368', margin: '0 0 6px',
           }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M4 6h16M4 10h10M4 14h13M4 18h8" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="square"/>
-            </svg>
-          </div>
-          <p style={{ fontFamily: "'VT323', monospace", fontSize: 18, color: 'var(--text-secondary)', margin: '0 0 8px' }}>
             No thread selected
           </p>
-          <p style={{ fontFamily: "'VT323', monospace", fontSize: 15, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+          <p style={{
+            fontFamily: 'Roboto, Arial, sans-serif',
+            fontSize: 13, color: '#80868b', margin: 0,
+          }}>
             Pick a question from the list to view the conversation
           </p>
         </div>
@@ -140,98 +144,92 @@ const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, on
   return (
     <div style={{
       flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0,
-      background: 'var(--bg-base)',
+      background: '#f6f8fc', fontFamily: 'Roboto, Arial, sans-serif',
     }}>
-      {/* ── Header ── */}
-      <div style={{
-        padding: '14px 24px 12px',
-        borderBottom: '1px solid var(--border-subtle)',
-        flexShrink: 0,
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16,
-        background: 'var(--bg-surface)',
-      }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          {isAdmin ? (
-            <EditableField
-              value={question.title}
-              placeholder="Untitled Question"
-              onSave={v => onUpdateQuestion?.(question.id, { title: v })}
-              style={{ fontFamily: "'VT323', monospace", fontSize: 22, color: 'var(--text-primary)', lineHeight: 1.3 }}
-            />
-          ) : (
-            <h2 style={{ fontFamily: "'VT323', monospace", fontSize: 22, fontWeight: 400, margin: 0, color: 'var(--text-primary)', lineHeight: 1.3 }}>
-              {question.title}
-            </h2>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5 }}>
-            <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)' }}>
-              {form?.name}
-            </span>
-            <span style={{ width: 4, height: 4, background: 'var(--text-muted)', display: 'inline-block' }} />
-            <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)' }}>
-              {messages.length} messages
-            </span>
-            <span style={{ width: 4, height: 4, background: 'var(--text-muted)', display: 'inline-block' }} />
-            <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)' }}>
-              {question.lastActivity}
-            </span>
-          </div>
-        </div>
 
-        {/* Status badge — pixel chip */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '5px 10px',
-          background: status.bg,
-          border: `1px solid ${status.border}`,
-          boxShadow: `2px 2px 0 rgba(0,0,0,0.3)`,
-          flexShrink: 0,
-        }}>
+      {/* ── Subject / header ── */}
+      <div style={{
+        padding: '20px 28px 12px',
+        background: '#f6f8fc',
+        flexShrink: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {isAdmin ? (
+              <EditableField
+                value={question.title}
+                placeholder="Untitled Question"
+                onSave={v => onUpdateQuestion?.(question.id, { title: v })}
+                style={{
+                  fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+                  fontSize: 22, fontWeight: 400, color: '#202124', lineHeight: 1.35,
+                  display: 'block',
+                }}
+              />
+            ) : (
+              <h2 style={{
+                fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+                fontSize: 22, fontWeight: 400, margin: 0,
+                color: '#202124', lineHeight: 1.35,
+              }}>
+                {question.title}
+              </h2>
+            )}
+          </div>
+
+          {/* Status badge */}
           <span style={{
-            width: 6, height: 6,
-            background: status.dot,
-            display: 'inline-block',
-            boxShadow: `0 0 5px ${status.dot}`,
-          }} />
-          <span style={{
-            fontFamily: "'VT323', monospace", fontSize: 14, letterSpacing: '0.06em',
-            color: status.text, whiteSpace: 'nowrap', textTransform: 'uppercase',
+            flexShrink: 0, padding: '4px 10px', borderRadius: 4,
+            fontSize: 12, fontWeight: 500,
+            background: status.bg, color: status.color,
           }}>
             {status.label}
           </span>
         </div>
+
+        {/* Meta row */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, marginTop: 5,
+          fontFamily: 'Roboto, Arial, sans-serif', fontSize: 13, color: '#5f6368',
+        }}>
+          {form?.name && <span>{form.name}</span>}
+          {form?.name && <span>·</span>}
+          <span>{messages.length} {messages.length === 1 ? 'message' : 'messages'}</span>
+          {question.lastActivity && <><span>·</span><span>{question.lastActivity}</span></>}
+        </div>
       </div>
 
-      {/* ── Context card ── */}
+      {/* ── Context / description card ── */}
       <div style={{
-        padding: '12px 24px',
-        borderBottom: '1px solid var(--border-subtle)',
+        padding: '0 28px 16px',
         flexShrink: 0,
-        background: 'var(--bg-surface)',
       }}>
         <div style={{
-          background: 'var(--bg-elevated)',
-          border: '1px solid var(--border-mid)',
-          boxShadow: '3px 3px 0 rgba(0,0,0,0.3)',
-          padding: '12px 14px',
+          background: '#ffffff',
+          borderRadius: 8,
+          border: '1px solid #e0e0e0',
+          padding: '14px 18px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-            <div style={{
-              width: 18, height: 18,
-              background: 'var(--accent-soft)',
-              border: '1px solid var(--accent-dim)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
+                    fill="#5f6368"/>
+            </svg>
+            <span style={{
+              fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+              fontSize: 12, fontWeight: 500, color: '#5f6368',
+              textTransform: 'uppercase', letterSpacing: '0.06em',
             }}>
-              <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
-                <path d="M5 1v5M5 8.5v.5" stroke="var(--accent)" strokeWidth="2" strokeLinecap="square"/>
-              </svg>
-            </div>
-            <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               Question context
             </span>
             {isAdmin && (
-              <span style={{ fontFamily: "'VT323', monospace", fontSize: 12, color: 'var(--text-muted)', marginLeft: 'auto' }}>
-                [editable]
+              <span style={{
+                marginLeft: 'auto', fontSize: 11, color: '#111111',
+                fontFamily: 'Roboto, Arial, sans-serif',
+              }}>
+                Click to edit
               </span>
             )}
           </div>
@@ -241,11 +239,20 @@ const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, on
               placeholder="Add context or instructions for the respondent…"
               onSave={v => onUpdateQuestion?.(question.id, { description: v })}
               multiline
-              style={{ fontFamily: "'VT323', monospace", fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.5 }}
+              style={{
+                fontFamily: 'Roboto, Arial, sans-serif',
+                fontSize: 14, color: '#3c4043', lineHeight: 1.6,
+                display: 'block',
+              }}
             />
           ) : (
-            <p style={{ fontFamily: "'VT323', monospace", fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-              {question.description || <span style={{ color: 'var(--text-muted)' }}>No context provided</span>}
+            <p style={{
+              fontFamily: 'Roboto, Arial, sans-serif',
+              fontSize: 14, color: '#3c4043', lineHeight: 1.6, margin: 0,
+            }}>
+              {question.description || (
+                <span style={{ color: '#9aa0a6', fontStyle: 'italic' }}>No context provided</span>
+              )}
             </p>
           )}
         </div>
@@ -254,32 +261,45 @@ const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, on
       {/* ── Messages ── */}
       <div style={{
         flex: 1, overflowY: 'auto',
-        padding: '20px 24px',
-        display: 'flex', flexDirection: 'column', gap: 16,
+        padding: '0 28px 12px',
+        display: 'flex', flexDirection: 'column', gap: 8,
       }}>
         {messagesLoading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              {[0,1,2].map(i => (
-                <span key={i} className="typing-dot" style={{ animationDelay: `${i * 0.2}s` }} />
-              ))}
-            </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, gap: 8,
+          }}>
+            {[0,1,2].map(i => (
+              <span key={i} style={{
+                width: 8, height: 8, borderRadius: '50%', background: '#111111',
+                display: 'inline-block',
+                animation: 'bounceDot 1.2s infinite',
+                animationDelay: `${i * 0.2}s`,
+              }} />
+            ))}
           </div>
         ) : messages.length === 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                fontFamily: "'VT323', monospace", fontSize: 48, marginBottom: 10,
-                color: 'var(--text-muted)',
-              }}>[ ]</div>
-              <p style={{ fontFamily: "'VT323', monospace", fontSize: 15, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                No replies yet — be the first
-              </p>
-            </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80,
+          }}>
+            <p style={{
+              fontFamily: 'Roboto, Arial, sans-serif',
+              fontSize: 14, color: '#80868b', margin: 0,
+            }}>
+              No replies yet — be the first
+            </p>
           </div>
         ) : (
           <>
-            <div className="divider-label">thread start</div>
+            {/* Thread divider */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0',
+            }}>
+              <div style={{ flex: 1, height: 1, background: '#e0e0e0' }} />
+              <span style={{ fontSize: 12, color: '#80868b', whiteSpace: 'nowrap' }}>
+                {messages.length} {messages.length === 1 ? 'reply' : 'replies'}
+              </span>
+              <div style={{ flex: 1, height: 1, background: '#e0e0e0' }} />
+            </div>
             {messages.map((m, i) => (
               <MessageBubble key={m.id} message={m} isNew={i === messages.length - 1} />
             ))}
@@ -291,60 +311,70 @@ const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, on
       {/* ── Admin status controls ── */}
       {isAdmin && onUpdateStatus && (
         <div style={{
-          padding: '8px 24px',
-          borderTop: '1px solid var(--border-subtle)',
-          background: 'var(--bg-surface)',
+          padding: '10px 28px',
+          borderTop: '1px solid #e0e0e0',
+          background: '#ffffff',
           display: 'flex', gap: 8, alignItems: 'center',
           flexShrink: 0,
         }}>
-          <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 4 }}>
+          <span style={{
+            fontFamily: 'Roboto, Arial, sans-serif',
+            fontSize: 12, color: '#5f6368', fontWeight: 500,
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4,
+          }}>
             Mark as:
           </span>
           <button
             onClick={() => onUpdateStatus(question.id, 'answered')}
             disabled={question.status === 'answered'}
-            className="pixel-btn"
             style={{
-              padding: '4px 14px',
-              fontFamily: "'VT323', monospace", fontSize: 15,
-              background: question.status === 'answered' ? 'rgba(0,255,159,0.12)' : 'transparent',
-              border: `1px solid ${question.status === 'answered' ? 'var(--status-done)' : 'rgba(0,255,159,0.3)'}`,
-              color: 'var(--status-done)',
-              cursor: question.status === 'answered' ? 'default' : 'pointer',
-              opacity: question.status === 'answered' ? 0.6 : 1,
+              padding: '5px 14px', borderRadius: 16,
+              fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+              fontSize: 13, fontWeight: 500, cursor: question.status === 'answered' ? 'default' : 'pointer',
+              background: question.status === 'answered' ? '#e6f4ea' : 'transparent',
+              border: `1px solid ${question.status === 'answered' ? '#34a853' : '#dadce0'}`,
+              color: '#137333',
+              opacity: question.status === 'answered' ? 0.7 : 1,
+              transition: 'background 0.15s, border-color 0.15s',
             }}
+            onMouseEnter={e => { if (question.status !== 'answered') e.currentTarget.style.background = '#e6f4ea'; }}
+            onMouseLeave={e => { if (question.status !== 'answered') e.currentTarget.style.background = 'transparent'; }}
           >
             Completed
           </button>
           <button
             onClick={() => onUpdateStatus(question.id, 'unanswered')}
             disabled={question.status === 'unanswered'}
-            className="pixel-btn"
             style={{
-              padding: '4px 14px',
-              fontFamily: "'VT323', monospace", fontSize: 15,
-              background: question.status === 'unanswered' ? 'rgba(255,215,0,0.10)' : 'transparent',
-              border: `1px solid ${question.status === 'unanswered' ? 'var(--status-wait)' : 'rgba(255,215,0,0.3)'}`,
-              color: 'var(--status-wait)',
-              cursor: question.status === 'unanswered' ? 'default' : 'pointer',
-              opacity: question.status === 'unanswered' ? 0.6 : 1,
+              padding: '5px 14px', borderRadius: 16,
+              fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+              fontSize: 13, fontWeight: 500, cursor: question.status === 'unanswered' ? 'default' : 'pointer',
+              background: question.status === 'unanswered' ? '#fef7e0' : 'transparent',
+              border: `1px solid ${question.status === 'unanswered' ? '#fbbc04' : '#dadce0'}`,
+              color: '#b06000',
+              opacity: question.status === 'unanswered' ? 0.7 : 1,
+              transition: 'background 0.15s, border-color 0.15s',
             }}
+            onMouseEnter={e => { if (question.status !== 'unanswered') e.currentTarget.style.background = '#fef7e0'; }}
+            onMouseLeave={e => { if (question.status !== 'unanswered') e.currentTarget.style.background = 'transparent'; }}
           >
             Pending
           </button>
           <button
             onClick={() => onUpdateStatus(question.id, 'needs-clarification')}
             disabled={question.status === 'needs-clarification'}
-            className="pixel-btn"
             style={{
-              padding: '4px 14px',
-              fontFamily: "'VT323', monospace", fontSize: 15,
-              background: question.status === 'needs-clarification' ? 'rgba(255,68,102,0.10)' : 'transparent',
-              border: `1px solid ${question.status === 'needs-clarification' ? 'var(--status-flag)' : 'rgba(255,68,102,0.3)'}`,
-              color: 'var(--status-flag)',
-              cursor: question.status === 'needs-clarification' ? 'default' : 'pointer',
-              opacity: question.status === 'needs-clarification' ? 0.6 : 1,
+              padding: '5px 14px', borderRadius: 16,
+              fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+              fontSize: 13, fontWeight: 500, cursor: question.status === 'needs-clarification' ? 'default' : 'pointer',
+              background: question.status === 'needs-clarification' ? '#fce8e6' : 'transparent',
+              border: `1px solid ${question.status === 'needs-clarification' ? '#ea4335' : '#dadce0'}`,
+              color: '#c5221f',
+              opacity: question.status === 'needs-clarification' ? 0.7 : 1,
+              transition: 'background 0.15s, border-color 0.15s',
             }}
+            onMouseEnter={e => { if (question.status !== 'needs-clarification') e.currentTarget.style.background = '#fce8e6'; }}
+            onMouseLeave={e => { if (question.status !== 'needs-clarification') e.currentTarget.style.background = 'transparent'; }}
           >
             Draft
           </button>
@@ -353,10 +383,9 @@ const ThreadView: React.FC<ThreadViewProps> = ({ question, form, onSendReply, on
 
       {/* ── Reply box ── */}
       <div style={{
-        padding: '12px 24px 18px',
+        padding: '12px 28px 20px',
         flexShrink: 0,
-        borderTop: '1px solid var(--border-subtle)',
-        background: 'var(--bg-surface)',
+        background: '#f6f8fc',
       }}>
         <ReplyBox
           onSend={content => onSendReply(question.id, content) ?? Promise.resolve()}

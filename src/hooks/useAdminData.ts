@@ -21,8 +21,18 @@ export function useAdminData() {
   const [loadingTeams, setLoadingTeams] = useState(true);
   const [loadingTQ, setLoadingTQ] = useState(false);
   const [loadingM, setLoadingM] = useState(false);
-  const msgChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const tqChannelRef  = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  const msgChannelRef    = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const tqChannelRef     = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  // Refs so real-time callbacks always see fresh values without re-subscribing
+  const selectedTeamIdRef = useRef<string | null>(null);
+  const selectedTQIdRef   = useRef<string | null>(null);
+  const teamQuestionsRef  = useRef<TeamQuestion[]>([]);
+
+  useEffect(() => { selectedTeamIdRef.current = selectedTeamId; }, [selectedTeamId]);
+  useEffect(() => { selectedTQIdRef.current   = selectedTQId;   }, [selectedTQId]);
+  useEffect(() => { teamQuestionsRef.current  = teamQuestions;  }, [teamQuestions]);
 
   // ── Bootstrap ─────────────────────────────────────────────────
   useEffect(() => {
@@ -40,7 +50,9 @@ export function useAdminData() {
   // ── Select team → load its questions ────────────────────────
   const handleSelectTeam = useCallback(async (teamId: string) => {
     setSelectedTeamId(teamId);
+    selectedTeamIdRef.current = teamId;
     setSelectedTQId(null);
+    selectedTQIdRef.current = null;
     setMessages([]);
     setLoadingTQ(true);
 
@@ -51,21 +63,27 @@ export function useAdminData() {
     try {
       const tqs = await getTeamQuestions(teamId);
       setTeamQuestions(tqs);
-      if (tqs.length > 0) setSelectedTQId(tqs[0].id);
+      teamQuestionsRef.current = tqs;
+      if (tqs.length > 0) {
+        setSelectedTQId(tqs[0].id);
+        selectedTQIdRef.current = tqs[0].id;
+      }
     } catch (e) {
       console.error('getTeamQuestions failed:', e);
     } finally {
       setLoadingTQ(false);
     }
 
-    // Real-time: status changes for this team's questions
+    // Real-time: team_questions changes for this team
+    // No DB-side filter — JS filter to avoid REPLICA IDENTITY requirements
     const ch = supabase
       .channel(`admin:tq:${teamId}`)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'team_questions', filter: `team_id=eq.${teamId}` },
+        { event: 'UPDATE', schema: 'public', table: 'team_questions' },
         (payload) => {
           const row = payload.new as any;
+          if (row.team_id !== teamId) return;
           setTeamQuestions(prev =>
             prev.map(q => q.id === row.id ? { ...q, status: row.status as TeamQuestionStatus } : q)
           );
@@ -73,9 +91,14 @@ export function useAdminData() {
       )
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'team_questions', filter: `team_id=eq.${teamId}` },
-        () => {
-          getTeamQuestions(teamId).then(setTeamQuestions).catch(console.error);
+        { event: 'INSERT', schema: 'public', table: 'team_questions' },
+        (payload) => {
+          const row = payload.new as any;
+          if (row.team_id !== teamId) return;
+          getTeamQuestions(teamId).then(tqs => {
+            setTeamQuestions(tqs);
+            teamQuestionsRef.current = tqs;
+          }).catch(console.error);
         }
       )
       .subscribe();
@@ -86,8 +109,11 @@ export function useAdminData() {
   // ── Select team question → load messages ────────────────────
   const handleSelectTQ = useCallback(async (tqId: string) => {
     setSelectedTQId(tqId);
-    const tq = teamQuestions.find(q => q.id === tqId);
-    if (!tq || !selectedTeamId) return;
+    selectedTQIdRef.current = tqId;
+
+    const tq = teamQuestionsRef.current.find(q => q.id === tqId);
+    const teamId = selectedTeamIdRef.current;
+    if (!tq || !teamId) return;
 
     setMessages([]);
     setLoadingM(true);
@@ -97,7 +123,7 @@ export function useAdminData() {
     }
 
     try {
-      const msgs = await getMessages(selectedTeamId, tq.questionId);
+      const msgs = await getMessages(teamId, tq.questionId);
       setMessages(msgs);
     } catch (e) {
       console.error('getMessages failed:', e);
@@ -105,21 +131,24 @@ export function useAdminData() {
       setLoadingM(false);
     }
 
-    // Real-time: new messages
+    // Real-time: new messages — no DB-side filter, JS filter instead
     const ch = supabase
-      .channel(`admin:msg:${selectedTeamId}:${tq.questionId}`)
+      .channel(`admin:msg:${teamId}:${tq.questionId}`)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `team_id=eq.${selectedTeamId}`,
-        },
+        { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
           const row = payload.new as any;
-          if (row.question_id !== tq.questionId) return;
-          getMessages(selectedTeamId, tq.questionId)
+          const currentTeamId = selectedTeamIdRef.current;
+          const currentTQId   = selectedTQIdRef.current;
+          const currentTQ     = teamQuestionsRef.current.find(q => q.id === currentTQId);
+
+          if (!currentTeamId || !currentTQ) return;
+          if (row.team_id !== currentTeamId) return;         // wrong team
+          if (row.question_id !== currentTQ.questionId) return; // wrong question
+
+          // Replace with authoritative DB list (deduplicates optimistic message)
+          getMessages(currentTeamId, currentTQ.questionId)
             .then(setMessages)
             .catch(console.error);
         }
@@ -127,7 +156,7 @@ export function useAdminData() {
       .subscribe();
 
     msgChannelRef.current = ch;
-  }, [teamQuestions, selectedTeamId]);
+  }, []);
 
   // ── Cleanup on unmount ────────────────────────────────────────
   useEffect(() => {
@@ -154,13 +183,13 @@ export function useAdminData() {
     if (!window.confirm('Delete this team and all its data?')) return;
     await dbDeleteTeam(teamId);
     setTeams(prev => prev.filter(t => t.id !== teamId));
-    if (selectedTeamId === teamId) {
+    if (selectedTeamIdRef.current === teamId) {
       setSelectedTeamId(null);
       setTeamQuestions([]);
       setSelectedTQId(null);
       setMessages([]);
     }
-  }, [selectedTeamId]);
+  }, []);
 
   const createQuestion = useCallback(async (title: string, description: string) => {
     try {
@@ -192,11 +221,13 @@ export function useAdminData() {
 
   const assignToTeams = useCallback(async (questionId: string, teamIds: string[]) => {
     await assignQuestionToTeams(questionId, teamIds);
-    if (selectedTeamId && teamIds.includes(selectedTeamId)) {
-      const tqs = await getTeamQuestions(selectedTeamId);
+    const teamId = selectedTeamIdRef.current;
+    if (teamId && teamIds.includes(teamId)) {
+      const tqs = await getTeamQuestions(teamId);
       setTeamQuestions(tqs);
+      teamQuestionsRef.current = tqs;
     }
-  }, [selectedTeamId]);
+  }, []);
 
   const unassignFromTeam = useCallback(async (questionId: string, teamId: string) => {
     await unassignQuestionFromTeam(questionId, teamId);
@@ -209,32 +240,50 @@ export function useAdminData() {
   }, []);
 
   const sendReply = useCallback(async (content: string) => {
-    if (!selectedTQId || !selectedTeamId) return;
-    const tq = teamQuestions.find(q => q.id === selectedTQId);
+    const tqId   = selectedTQIdRef.current;
+    const teamId = selectedTeamIdRef.current;
+    if (!tqId || !teamId) return;
+
+    const tq = teamQuestionsRef.current.find(q => q.id === tqId);
     if (!tq) return;
-    await dbSendMessage(selectedTeamId, tq.questionId, 'admin', content);
-  }, [selectedTQId, selectedTeamId, teamQuestions]);
+
+    await dbSendMessage(teamId, tq.questionId, 'admin', content);
+
+    // Optimistic update — show immediately without waiting for real-time
+    setMessages(prev => [
+      ...prev,
+      {
+        id: `opt-${Date.now()}`,
+        teamId,
+        questionId: tq.questionId,
+        sender: 'admin',
+        content: content.trim(),
+        createdAt: new Date().toISOString(),
+        senderName: 'Admin',
+        senderInitial: 'A',
+      } as TeamMessage,
+    ]);
+
+    // Belt-and-suspenders: refetch from DB to get real ID + any concurrent msgs
+    getMessages(teamId, tq.questionId)
+      .then(setMessages)
+      .catch(console.error);
+  }, []);
 
   const getAssigned = useCallback((questionId: string) => getAssignedTeamIds(questionId), []);
 
   const selectedTQ = teamQuestions.find(q => q.id === selectedTQId) ?? null;
 
   return {
-    // data
     teams, questions, teamQuestions, messages,
     selectedTeamId, selectedTQ,
     loadingTeams, loadingTQ, loadingM,
-    // selection
     selectTeam: handleSelectTeam,
     selectTQ: handleSelectTQ,
-    // team actions
     createTeam, removeTeam,
-    // question actions
     createQuestion, editQuestion, removeQuestion,
     assignToTeams, unassignFromTeam, getAssigned,
-    // status
     updateStatus,
-    // messaging
     sendReply,
   };
 }

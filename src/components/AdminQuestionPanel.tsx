@@ -10,8 +10,8 @@ interface AdminQuestionPanelProps {
 }
 
 const STATUS_LABEL: Record<TeamQuestion['status'], string> = {
-  pending:   'Pending',
-  completed: 'Completed',
+  pending:   'Not Seen',
+  completed: 'Sent',
   draft:     'Draft',
 };
 
@@ -22,15 +22,15 @@ const STATUS_COLOR: Record<TeamQuestion['status'], string> = {
 };
 
 const STATUS_BG: Record<TeamQuestion['status'], string> = {
-  pending:   'rgba(255,215,0,0.07)',
-  completed: 'rgba(0,255,159,0.07)',
-  draft:     'rgba(255,68,102,0.07)',
+  pending:   'rgba(255,255,255,0.04)',
+  completed: 'rgba(255,255,255,0.07)',
+  draft:     'rgba(255,255,255,0.02)',
 };
 
 const GROUPS: { label: string; status: TeamQuestion['status'] }[] = [
-  { label: 'Draft',     status: 'draft' },
-  { label: 'Pending',   status: 'pending' },
-  { label: 'Completed', status: 'completed' },
+  { label: 'Not Seen', status: 'pending' },
+  { label: 'Draft',    status: 'draft' },
+  { label: 'Sent',     status: 'completed' },
 ];
 
 const AdminQuestionPanel: React.FC<AdminQuestionPanelProps> = ({
@@ -94,7 +94,6 @@ const AdminQuestionPanel: React.FC<AdminQuestionPanelProps> = ({
                     width: 6, height: 6, flexShrink: 0,
                     background: STATUS_COLOR[status],
                     display: 'inline-block',
-                    boxShadow: `0 0 4px ${STATUS_COLOR[status]}`,
                   }} />
                   <span style={{
                     fontFamily: "'VT323', monospace", fontSize: 12,
@@ -150,7 +149,7 @@ const AdminQuestionPanel: React.FC<AdminQuestionPanelProps> = ({
                           fontFamily: "'VT323', monospace", fontSize: 11,
                           color: STATUS_COLOR[q.status],
                           background: STATUS_BG[q.status],
-                          border: `1px solid ${STATUS_COLOR[q.status]}40`,
+                          border: `1px solid var(--border-subtle)`,
                           padding: '0 5px',
                           marginLeft: 'auto',
                         }}>

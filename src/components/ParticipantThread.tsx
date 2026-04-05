@@ -9,12 +9,298 @@ interface ParticipantThreadProps {
   teamName: string;
 }
 
-const STATUS_CONFIG = {
-  pending:   { label: 'Not Yet Open', bg: 'rgba(255,215,0,0.07)',  text: 'var(--status-wait)', border: 'rgba(255,215,0,0.3)',  dot: 'var(--status-wait)' },
-  completed: { label: 'Completed',    bg: 'rgba(0,255,159,0.07)',  text: 'var(--status-done)', border: 'rgba(0,255,159,0.3)',  dot: 'var(--status-done)' },
-  draft:     { label: 'In Progress',  bg: 'rgba(255,68,102,0.07)', text: 'var(--status-flag)', border: 'rgba(255,68,102,0.3)', dot: 'var(--status-flag)' },
-} as const;
+/* Avatar colours cycling through Gmail-ish palette */
+const AVATAR_COLORS = ['#1a1a1a','#2e2e2e','#3a3a3a','#484848','#222222','#333333'];
+function avatarColor(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
 
+const GMAIL_BG   = '#f6f8fc';
+const GMAIL_CARD = '#ffffff';
+
+/* ── Small inline SVGs ──────────────────────────────────────────────── */
+const IconReply = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+    <path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"
+          fill="currentColor"/>
+  </svg>
+);
+const IconSend = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="white"/>
+  </svg>
+);
+const IconTrash = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+          fill="currentColor"/>
+  </svg>
+);
+const IconAttach = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H9v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S6 2.79 6 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"
+          fill="currentColor"/>
+  </svg>
+);
+const IconLink = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"
+          fill="currentColor"/>
+  </svg>
+);
+const IconEmoji = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"
+          fill="currentColor"/>
+  </svg>
+);
+const IconMore = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+          fill="currentColor"/>
+  </svg>
+);
+
+/* ── Circular avatar ────────────────────────────────────────────────── */
+const Avatar: React.FC<{ name: string; size?: number }> = ({ name, size = 36 }) => {
+  const initial = name[0]?.toUpperCase() ?? '?';
+  const bg = avatarColor(name);
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: bg,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: '#fff', fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+      fontSize: size * 0.44, fontWeight: 500, flexShrink: 0,
+      userSelect: 'none',
+    }}>
+      {initial}
+    </div>
+  );
+};
+
+/* ── Single email message row ───────────────────────────────────────── */
+const EmailRow: React.FC<{
+  senderName: string;
+  content: string;
+  createdAt: string;
+  isAdmin: boolean;
+}> = ({ senderName, content, createdAt, isAdmin }) => {
+  const time = new Date(createdAt).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
+  });
+
+  return (
+    <div style={{
+      background: GMAIL_CARD,
+      borderRadius: 8,
+      border: '1px solid #e0e0e0',
+      padding: '16px 20px',
+      display: 'flex', gap: 14, alignItems: 'flex-start',
+    }}>
+      <Avatar name={senderName} size={36} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* sender row */}
+        <div style={{
+          display: 'flex', alignItems: 'baseline',
+          justifyContent: 'space-between', marginBottom: 4,
+        }}>
+          <span style={{
+            fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+            fontWeight: 600, fontSize: 14, color: '#202124',
+          }}>
+            {senderName}
+            {isAdmin && (
+              <span style={{
+                marginLeft: 6, fontSize: 11, fontWeight: 500,
+                color: '#ffffff', background: '#333333',
+                borderRadius: 4, padding: '1px 6px',
+              }}>Admin</span>
+            )}
+          </span>
+          <span style={{
+            fontFamily: 'Roboto, Arial, sans-serif', fontSize: 12, color: '#5f6368',
+            whiteSpace: 'nowrap', marginLeft: 8,
+          }}>
+            {time}
+          </span>
+        </div>
+        {/* body */}
+        <p style={{
+          fontFamily: 'Roboto, Arial, sans-serif', fontSize: 14,
+          color: '#3c4043', lineHeight: 1.6, margin: 0,
+          whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        }}>
+          {content}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/* ── Gmail-style reply compose box ─────────────────────────────────── */
+const GmailReplyBox: React.FC<{
+  teamName: string;
+  recipientName: string;
+  value: string;
+  onChange: (v: string) => void;
+  onSend: () => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  sending: boolean;
+  focused: boolean;
+  onFocus: () => void;
+  onBlur: () => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement>;
+}> = ({ teamName, recipientName, value, onChange, onSend, onKeyDown,
+        sending, focused, onFocus, onBlur, textareaRef }) => {
+
+  const canSend = value.trim().length > 0 && !sending;
+  const iconColor = '#444746';
+
+  const handleInput = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+  };
+
+  return (
+    <div style={{
+      border: `1px solid ${focused ? "rgba(255,255,255,0.25)" : '#e0e0e0'}`,
+      borderRadius: 12,
+      background: GMAIL_CARD,
+      boxShadow: focused
+        ? '0 2px 10px rgba(0,0,0,0.15)'
+        : '0 1px 4px rgba(0,0,0,0.12)',
+      overflow: 'hidden',
+      transition: 'box-shadow 0.2s, border-color 0.2s',
+    }}>
+      {/* To: row */}
+      <div style={{
+        padding: '10px 16px 8px',
+        borderBottom: '1px solid #f1f3f4',
+        display: 'flex', alignItems: 'center', gap: 10,
+      }}>
+        <span style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          color: '#444746', fontFamily: 'Roboto, Arial, sans-serif', fontSize: 13,
+        }}>
+          <IconReply />
+          <span style={{ color: '#5f6368' }}>Reply to</span>
+          <span style={{
+            background: '#f1f3f4', borderRadius: 4,
+            padding: '2px 8px', color: '#202124', fontWeight: 500,
+          }}>
+            {recipientName}
+          </span>
+        </span>
+        <span style={{ marginLeft: 'auto', color: '#5f6368', fontSize: 12,
+          fontFamily: 'Roboto, Arial, sans-serif' }}>
+          Replying as <strong>{teamName}</strong>
+        </span>
+      </div>
+
+      {/* Textarea */}
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        onInput={handleInput}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        placeholder="Reply…"
+        rows={4}
+        disabled={sending}
+        style={{
+          width: '100%', border: 'none', outline: 'none',
+          padding: '14px 16px',
+          fontFamily: 'Roboto, Arial, sans-serif',
+          fontSize: 14, color: '#202124',
+          resize: 'none', minHeight: 90, maxHeight: 200,
+          lineHeight: 1.6, background: 'transparent',
+          opacity: sending ? 0.5 : 1,
+        }}
+      />
+
+      {/* Toolbar */}
+      <div style={{
+        padding: '8px 12px 10px',
+        display: 'flex', alignItems: 'center', gap: 4,
+        borderTop: '1px solid #f1f3f4',
+      }}>
+        {/* Send button */}
+        <button
+          onClick={onSend}
+          disabled={!canSend}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 18px', borderRadius: 20,
+            background: canSend ? '#111111' : '#888888',
+            color: 'white', border: 'none',
+            fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+            fontWeight: 500, fontSize: 14,
+            cursor: canSend ? 'pointer' : 'not-allowed',
+            transition: 'background 0.15s',
+            flexShrink: 0,
+          }}
+          onMouseEnter={e => { if (canSend) e.currentTarget.style.background = '#000000'; }}
+          onMouseLeave={e => { if (canSend) e.currentTarget.style.background = '#111111'; }}
+        >
+          {sending ? 'Sending…' : (
+            <>
+              <IconSend />
+              Send
+            </>
+          )}
+        </button>
+
+        {/* Spacer */}
+        <div style={{ width: 8 }} />
+
+        {/* Icon toolbar */}
+        {[IconAttach, IconLink, IconEmoji, IconMore].map((Icon, i) => (
+          <button key={i} style={{
+            background: 'none', border: 'none', padding: '6px',
+            borderRadius: '50%', cursor: 'pointer', color: iconColor,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = '#f1f3f4'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          >
+            <Icon />
+          </button>
+        ))}
+
+        {/* Trash — push to right */}
+        <button style={{
+          marginLeft: 'auto', background: 'none', border: 'none',
+          padding: '6px', borderRadius: '50%', cursor: 'pointer',
+          color: iconColor, display: 'flex', alignItems: 'center',
+          transition: 'background 0.15s',
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = '#f1f3f4'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >
+          <IconTrash />
+        </button>
+
+        {/* keyboard hint */}
+        <span style={{
+          fontFamily: 'Roboto, Arial, sans-serif', fontSize: 11,
+          color: '#80868b', marginLeft: 6, whiteSpace: 'nowrap',
+        }}>
+          ⌘↵ to send
+        </span>
+      </div>
+    </div>
+  );
+};
+
+/* ══ Main Component ══════════════════════════════════════════════════ */
 const ParticipantThread: React.FC<ParticipantThreadProps> = ({
   question, messages, loading, onSend, teamName,
 }) => {
@@ -37,7 +323,7 @@ const ParticipantThread: React.FC<ParticipantThreadProps> = ({
     try {
       await onSend(trimmed);
     } catch (e: any) {
-      setValue(trimmed); // restore on failure
+      setValue(trimmed);
       console.error('Send failed:', e?.message ?? e);
       alert('Failed to send: ' + (e?.message ?? 'Unknown error'));
     } finally {
@@ -52,231 +338,184 @@ const ParticipantThread: React.FC<ParticipantThreadProps> = ({
     }
   };
 
+  /* ── Empty state ── */
   if (!question) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-base)' }}>
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: GMAIL_BG,
+      }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: 52, height: 52, margin: '0 auto 14px',
-            background: 'var(--bg-elevated)', border: '2px solid var(--border-mid)',
-            boxShadow: '4px 4px 0 rgba(0,0,0,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 16 }}>
+            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"
+                  fill="#dadce0"/>
+          </svg>
+          <p style={{
+            fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+            fontSize: 16, color: '#5f6368', margin: 0,
           }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M4 6h16M4 10h10M4 14h13M4 18h8" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="square"/>
-            </svg>
-          </div>
-          <p style={{ fontFamily: "'VT323', monospace", fontSize: 16, color: 'var(--text-secondary)', margin: 0 }}>Select a question</p>
+            Select a question to view the thread
+          </p>
         </div>
       </div>
     );
   }
 
-  const status = STATUS_CONFIG[question.status];
+  const STATUS_STYLES: Record<string, { label: string; bg: string; color: string }> = {
+    pending:   { label: 'Not Seen', bg: '#f1f1f1', color: '#555555' },
+    completed: { label: 'Sent',     bg: '#e8e8e8', color: '#1a1a1a' },
+    draft:     { label: 'Draft',    bg: '#f5f5f5', color: '#333333' },
+  };
+  const st = STATUS_STYLES[question.status] ?? STATUS_STYLES.pending;
+
+  /* The admin who sent the question — we use "Admin" as display name */
+  const adminName = 'Admin';
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--bg-base)' }}>
-      {/* Header */}
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0,
+      background: GMAIL_BG, fontFamily: 'Roboto, Arial, sans-serif',
+    }}>
+
+      {/* ── Subject / header bar ── */}
       <div style={{
-        padding: '14px 24px 12px',
-        borderBottom: '1px solid var(--border-subtle)',
-        background: 'var(--bg-surface)',
+        padding: '20px 28px 12px',
+        background: GMAIL_BG,
         flexShrink: 0,
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16,
       }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <h2 style={{ fontFamily: "'VT323', monospace", fontSize: 22, fontWeight: 400, margin: 0, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+          <h2 style={{
+            fontFamily: 'Google Sans, Roboto, Arial, sans-serif',
+            fontSize: 22, fontWeight: 400, margin: 0,
+            color: '#202124', flex: 1, lineHeight: 1.35,
+          }}>
             {question.title}
           </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
-            <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)' }}>
-              {messages.length} messages
-            </span>
-          </div>
-        </div>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '5px 10px',
-          background: status.bg, border: `1px solid ${status.border}`,
-          boxShadow: '2px 2px 0 rgba(0,0,0,0.3)', flexShrink: 0,
-        }}>
-          <span style={{ width: 6, height: 6, background: status.dot, display: 'inline-block', boxShadow: `0 0 5px ${status.dot}` }} />
-          <span style={{ fontFamily: "'VT323', monospace", fontSize: 14, color: status.text, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            {status.label}
+          <span style={{
+            flexShrink: 0, padding: '4px 10px', borderRadius: 4,
+            fontSize: 12, fontWeight: 500,
+            background: st.bg, color: st.color,
+          }}>
+            {st.label}
           </span>
         </div>
+        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#5f6368' }}>
+          {messages.length} {messages.length === 1 ? 'message' : 'messages'} in thread
+        </p>
       </div>
 
-      {/* Context card */}
-      {question.description && (
+      {/* ── Thread scroll area ── */}
+      <div style={{
+        flex: 1, overflowY: 'auto',
+        padding: '0 28px 16px',
+        display: 'flex', flexDirection: 'column', gap: 8,
+      }}>
+        {/* Question as first "email" */}
         <div style={{
-          padding: '12px 24px',
-          borderBottom: '1px solid var(--border-subtle)',
-          background: 'var(--bg-surface)', flexShrink: 0,
+          background: GMAIL_CARD,
+          borderRadius: 8,
+          border: '1px solid #e0e0e0',
+          padding: '16px 20px',
+          display: 'flex', gap: 14, alignItems: 'flex-start',
         }}>
-          <div style={{
-            background: 'var(--bg-elevated)', border: '1px solid var(--border-mid)',
-            boxShadow: '3px 3px 0 rgba(0,0,0,0.3)', padding: '12px 14px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-              <div style={{
-                width: 18, height: 18, background: 'var(--accent-soft)', border: '1px solid var(--accent-dim)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
-                  <path d="M5 1v5M5 8.5v.5" stroke="var(--accent)" strokeWidth="2" strokeLinecap="square"/>
-                </svg>
+          <Avatar name={adminName} size={40} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              display: 'flex', alignItems: 'baseline',
+              justifyContent: 'space-between', marginBottom: 6,
+            }}>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: 14, color: '#202124' }}>
+                  Admin
+                  <span style={{
+                    marginLeft: 6, fontSize: 11, fontWeight: 500,
+                    color: '#ffffff', background: '#333333',
+                    borderRadius: 4, padding: '1px 6px',
+                  }}>Question</span>
+                </span>
+                <span style={{ fontSize: 12, color: '#5f6368', marginLeft: 8 }}>
+                  to {teamName}
+                </span>
               </div>
-              <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                Context
-              </span>
             </div>
-            <p style={{ fontFamily: "'VT323', monospace", fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-              {question.description}
-            </p>
+            {question.description ? (
+              <p style={{
+                fontSize: 14, color: '#3c4043', lineHeight: 1.6,
+                margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              }}>
+                {question.description}
+              </p>
+            ) : (
+              <p style={{ fontSize: 14, color: '#80868b', margin: 0, fontStyle: 'italic' }}>
+                No additional context provided.
+              </p>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 6 }}>
-            {[0,1,2].map(i => <span key={i} className="typing-dot" style={{ animationDelay: `${i * 0.2}s` }} />)}
+        {/* Divider */}
+        {messages.length > 0 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '4px 0',
+          }}>
+            <div style={{ flex: 1, height: 1, background: '#e0e0e0' }} />
+            <span style={{ fontSize: 12, color: '#80868b', whiteSpace: 'nowrap' }}>
+              {messages.length} {messages.length === 1 ? 'reply' : 'replies'}
+            </span>
+            <div style={{ flex: 1, height: 1, background: '#e0e0e0' }} />
           </div>
-        ) : messages.length === 0 ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: "'VT323', monospace", fontSize: 42, color: 'var(--text-muted)', marginBottom: 8 }}>[ ]</div>
-              <p style={{ fontFamily: "'VT323', monospace", fontSize: 15, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                No messages yet
-              </p>
-            </div>
+        )}
+
+        {/* Messages */}
+        {loading ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            height: 80, gap: 6,
+          }}>
+            {[0,1,2].map(i => (
+              <span key={i} style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: '#111111', display: 'inline-block',
+                animation: `bounceDot 1.2s infinite`,
+                animationDelay: `${i * 0.2}s`,
+              }} />
+            ))}
           </div>
         ) : (
-          <>
-            <div className="divider-label">thread start</div>
-            {messages.map((m, i) => {
-              const isAdmin = m.sender === 'admin';
-              return (
-                <div
-                  key={m.id}
-                  className={i === messages.length - 1 ? 'animate-fade-up' : ''}
-                  style={{
-                    display: 'flex',
-                    justifyContent: isAdmin ? 'flex-start' : 'flex-end',
-                    width: '100%',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, maxWidth: '72%', flexDirection: isAdmin ? 'row' : 'row-reverse' }}>
-                    <div style={{
-                      width: 28, height: 28, flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: "'VT323', monospace", fontSize: 13,
-                      background: isAdmin ? 'var(--accent)' : 'var(--bg-elevated)',
-                      border: `2px solid ${isAdmin ? 'var(--accent)' : 'var(--border-mid)'}`,
-                      boxShadow: '2px 2px 0 rgba(0,0,0,0.4)',
-                      color: isAdmin ? 'white' : 'var(--text-secondary)',
-                    }}>
-                      {m.senderInitial}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: isAdmin ? 'flex-start' : 'flex-end' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexDirection: isAdmin ? 'row' : 'row-reverse' }}>
-                        <span style={{ fontFamily: "'VT323', monospace", fontSize: 15, color: 'var(--text-secondary)' }}>{m.senderName}</span>
-                        <span style={{ fontFamily: "'VT323', monospace", fontSize: 12, color: 'var(--text-muted)' }}>
-                          {new Date(m.createdAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true })}
-                        </span>
-                      </div>
-                      <div style={{
-                        padding: '10px 14px', fontSize: 17, lineHeight: 1.5,
-                        fontFamily: "'VT323', monospace",
-                        background: isAdmin ? 'var(--bg-elevated)' : 'var(--bg-active)',
-                        border: `1px solid ${isAdmin ? 'var(--border-mid)' : 'var(--border-mid)'}`,
-                        boxShadow: '2px 2px 0 rgba(0,0,0,0.3)',
-                        color: isAdmin ? 'var(--text-secondary)' : 'var(--text-primary)',
-                        wordBreak: 'break-word',
-                      }}>
-                        {m.content}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </>
+          messages.map(m => (
+            <EmailRow
+              key={m.id}
+              senderName={m.senderName}
+              content={m.content}
+              createdAt={m.createdAt}
+              isAdmin={m.sender === 'admin'}
+            />
+          ))
         )}
+
         <div ref={endRef} />
       </div>
 
-      {/* Reply box */}
-      <div style={{ padding: '12px 24px 18px', flexShrink: 0, borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-        <div style={{
-          border: `2px solid ${focused ? 'var(--accent)' : 'var(--border-mid)'}`,
-          background: 'var(--bg-elevated)',
-          boxShadow: focused ? '4px 4px 0 var(--accent-dim)' : '3px 3px 0 rgba(0,0,0,0.4)',
-          overflow: 'hidden',
-        }}>
-          <div style={{ padding: '8px 14px 6px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 20, height: 20, background: 'var(--bg-hover)', border: '1px solid var(--border-mid)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'VT323', monospace", fontSize: 12, color: 'var(--text-tertiary)',
-            }}>
-              {teamName[0]?.toUpperCase() ?? 'T'}
-            </div>
-            <span style={{ fontFamily: "'VT323', monospace", fontSize: 14, color: 'var(--text-muted)' }}>
-              Replying as <span style={{ color: 'var(--text-secondary)' }}>{teamName}</span>
-            </span>
-          </div>
-          <textarea
-            ref={textareaRef}
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            onInput={() => {
-              const el = textareaRef.current;
-              if (!el) return;
-              el.style.height = 'auto';
-              el.style.height = Math.min(el.scrollHeight, 160) + 'px';
-            }}
-            placeholder="Write your reply…"
-            rows={3}
-            disabled={sending}
-            style={{
-              width: '100%', background: 'transparent', border: 'none', outline: 'none',
-              padding: '10px 14px', fontFamily: "'VT323', monospace", fontSize: 18,
-              color: 'var(--text-primary)', resize: 'none', minHeight: 68, maxHeight: 160,
-              lineHeight: 1.5, opacity: sending ? 0.5 : 1,
-            }}
-          />
-          <div style={{
-            padding: '8px 12px 10px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            borderTop: '1px solid var(--border-subtle)',
-          }}>
-            <span style={{ fontFamily: "'VT323', monospace", fontSize: 14, color: 'var(--text-muted)' }}>
-              {sending ? 'Sending…' : '⌘↵ send'}
-            </span>
-            <button
-              onClick={handleSend}
-              disabled={!value.trim() || sending}
-              className="pixel-btn"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px',
-                border: `2px solid ${value.trim() && !sending ? 'var(--accent)' : 'var(--border-subtle)'}`,
-                background: value.trim() && !sending ? 'var(--accent)' : 'var(--bg-hover)',
-                color: value.trim() && !sending ? 'white' : 'var(--text-muted)',
-                fontFamily: "'VT323', monospace", fontSize: 16,
-                cursor: value.trim() && !sending ? 'pointer' : 'not-allowed',
-                boxShadow: value.trim() ? '3px 3px 0 rgba(0,0,0,0.4)' : 'none',
-              }}
-            >
-              Send Reply
-            </button>
-          </div>
-        </div>
+      {/* ── Reply box ── */}
+      <div style={{
+        padding: '0 28px 24px',
+        flexShrink: 0,
+        background: GMAIL_BG,
+      }}>
+        <GmailReplyBox
+          teamName={teamName}
+          recipientName={adminName}
+          value={value}
+          onChange={setValue}
+          onSend={handleSend}
+          onKeyDown={handleKeyDown}
+          sending={sending}
+          focused={focused}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          textareaRef={textareaRef}
+        />
       </div>
     </div>
   );

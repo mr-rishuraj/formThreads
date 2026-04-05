@@ -23,10 +23,16 @@ const STATUS_COLOR: Record<TeamQuestion['status'], string> = {
   draft:     'var(--status-flag)',
 };
 
+const STATUS_BG: Record<TeamQuestion['status'], string> = {
+  pending:   'rgba(255,255,255,0.04)',
+  completed: 'rgba(255,255,255,0.07)',
+  draft:     'rgba(255,255,255,0.02)',
+};
+
 const GROUPS: { label: string; status: TeamQuestion['status'] }[] = [
-  { label: 'Not Yet Open', status: 'pending' },
-  { label: 'In Progress',  status: 'draft' },
-  { label: 'Completed',    status: 'completed' },
+  { label: 'Not Seen', status: 'pending' },
+  { label: 'Draft',    status: 'draft' },
+  { label: 'Sent',     status: 'completed' },
 ];
 
 // ── Participant nav: Inbox accordion ──────────────────────────
@@ -61,8 +67,8 @@ const ParticipantNav: React.FC<ParticipantNavProps> = ({
         }}>
           <div style={{
             width: 22, height: 22,
-            background: 'rgba(136,119,255,0.12)',
-            border: '1px solid var(--accent-dim)',
+            background: 'var(--accent-soft)',
+            border: '1px solid var(--border-mid)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 11, flexShrink: 0,
           }}>★</div>
@@ -129,7 +135,7 @@ const ParticipantNav: React.FC<ParticipantNavProps> = ({
                       width: 5, height: 5, flexShrink: 0,
                       background: STATUS_COLOR[status as TeamQuestion['status']],
                       display: 'inline-block',
-                      boxShadow: `0 0 4px ${STATUS_COLOR[status as TeamQuestion['status']]}`,
+                      boxShadow: 'none',
                     }} />
                     <span style={{
                       fontFamily: "'VT323', monospace", fontSize: 12,
@@ -174,8 +180,8 @@ const ParticipantNav: React.FC<ParticipantNavProps> = ({
                           <span style={{
                             fontFamily: "'VT323', monospace", fontSize: 11,
                             color: 'var(--status-done)',
-                            background: 'rgba(0,255,159,0.08)',
-                            border: '1px solid rgba(0,255,159,0.3)',
+                            background: 'var(--accent-soft)',
+                            border: '1px solid var(--border-mid)',
                             padding: '1px 5px', flexShrink: 0,
                           }}>✓</span>
                         ) : q.unread ? (
@@ -183,7 +189,6 @@ const ParticipantNav: React.FC<ParticipantNavProps> = ({
                             width: 7, height: 7,
                             background: 'var(--accent)',
                             display: 'inline-block', flexShrink: 0,
-                            boxShadow: '0 0 4px var(--accent-glow)',
                           }} />
                         ) : null}
                       </button>
@@ -230,7 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             width: 30, height: 30,
             background: 'var(--accent)',
             border: '2px solid var(--accent)',
-            boxShadow: '3px 3px 0 rgba(0,0,0,0.5), 0 0 10px var(--accent-glow)',
+            boxShadow: '3px 3px 0 rgba(0,0,0,0.5)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
@@ -358,9 +363,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           }}
           onMouseEnter={e => {
             const el = e.currentTarget;
-            el.style.color = 'var(--status-flag)';
-            el.style.borderColor = 'rgba(255,68,102,0.3)';
-            el.style.background = 'rgba(255,68,102,0.07)';
+            el.style.color = 'var(--text-primary)';
+            el.style.borderColor = 'var(--border-mid)';
+            el.style.background = 'var(--bg-hover)';
           }}
           onMouseLeave={e => {
             const el = e.currentTarget;
