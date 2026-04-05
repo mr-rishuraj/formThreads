@@ -21,7 +21,12 @@ DECLARE
     'NILAM',
     'TEST TEAM 1',
     'TEST TEAM 2',
-    'TEST TEAM 3'
+    'TEST TEAM 3',
+    'BHARAT CONSULTING GROUP',
+    'LETS CRACK IT',
+    'QUANTSZ',
+    'ROWDY RANGERS',
+    'NARCISSISTIC STALLERS'
   ];
   team_codes  text[]  := ARRAY[
     'VVENT1',
@@ -36,7 +41,12 @@ DECLARE
     'NILAM1',
     'TEST01',
     'TEST02',
-    'TEST03'
+    'TEST03',
+    'BCG001',
+    'LCI001',
+    'QUANTZ',
+    'RRANG1',
+    'NSTLL1'
   ];
   i integer;
 
