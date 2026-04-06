@@ -79,7 +79,7 @@ const ParticipantNav: React.FC<ParticipantNavProps> = ({
         </div>
       )}
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
         {/* ── Inbox row ── */}
         <button
           onClick={() => setInboxOpen(o => !o)}
@@ -227,6 +227,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       display: 'flex',
       flexDirection: 'column',
       flexShrink: 0,
+      overflow: 'hidden',
+      minHeight: 0,
     }}>
       {/* ── Logo ── */}
       <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
@@ -256,7 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {isAdmin ? (
         /* ── Admin: Teams list ── */
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '10px 20px 8px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontFamily: "'VT323', monospace", fontSize: 13, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               Teams

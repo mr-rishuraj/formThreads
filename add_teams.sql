@@ -34,16 +34,16 @@ BEGIN
   END IF;
 
   -- ── Competition teams (all uppercase, access key = PASSWORD) ──
-  CALL upsert_team('VISIONARY VENTURES',    'VVENT1', 'PASSWORD');
-  CALL upsert_team('CRAZY DRIVERS',         'CDRIV1', 'PASSWORD');
-  CALL upsert_team('TEAM CAPITAL',          'TCAP01', 'PASSWORD');
-  CALL upsert_team('THE PROOF OF CONCEPT',  'TPOC01', 'PASSWORD');
-  CALL upsert_team('BIHARIS IN FINANCE',    'BIFIN1', 'PASSWORD');
-  CALL upsert_team('THE BUCKET MEN',        'TBUCK1', 'PASSWORD');
-  CALL upsert_team('TENET',                 'TENET1', 'PASSWORD');
-  CALL upsert_team('UNSTOPPABLE',           'UNSTOP', 'PASSWORD');
-  CALL upsert_team('GHODEBOYS',             'GHODE1', 'PASSWORD');
-  CALL upsert_team('NILAM',                 'NILAM1', 'PASSWORD');
+  CALL upsert_team('VISIONARY VENTURES',    'VVENT1', 'VVENT1');
+  CALL upsert_team('CRAZY DRIVERS',         'CDRIV1', 'CDRIV1');
+  CALL upsert_team('TEAM CAPITAL',          'TCAP01', 'TCAP01');
+  CALL upsert_team('THE PROOF OF CONCEPT',  'TPOC01', 'TPOC01');
+  CALL upsert_team('BIHARIS IN FINANCE',    'BIFIN1', 'BIFIN1');
+  CALL upsert_team('THE BUCKET MEN',        'TBUCK1', 'TBUCK1');
+  CALL upsert_team('TENET',                 'TENET1', 'TENET1');
+  CALL upsert_team('UNSTOPPABLE',           'UNSTOP', 'UNSTOP');
+  CALL upsert_team('GHODEBOYS',             'GHODE1', 'GHODE1');
+  CALL upsert_team('NILAM',                 'NILAM1', 'NILAM1');
 
   -- ── Test teams ────────────────────────────────────────────────
   CALL upsert_team('TEST TEAM 1', 'TEST01', 'PASSWORD');

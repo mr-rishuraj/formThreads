@@ -63,17 +63,17 @@ BEGIN
 
     IF t_id IS NULL THEN
       INSERT INTO teams (id, name, code, access_key, created_by, created_at)
-      VALUES (uuid_generate_v4(), team_names[i], team_codes[i], 'PASSWORD', admin_id, now());
-      RAISE NOTICE 'Created: %', team_names[i];
+      VALUES (uuid_generate_v4(), team_names[i], team_codes[i], team_codes[i], admin_id, now());
+      RAISE NOTICE 'Created: % with access key: %', team_names[i], team_codes[i];
     ELSE
-      UPDATE teams SET name = team_names[i], access_key = 'PASSWORD' WHERE id = t_id;
-      RAISE NOTICE 'Updated: %', team_names[i];
+      UPDATE teams SET name = team_names[i], access_key = team_codes[i] WHERE id = t_id;
+      RAISE NOTICE 'Updated: % with access key: %', team_names[i], team_codes[i];
     END IF;
   END LOOP;
 
-  -- Also uppercase RISHU's existing team and set key to PASSWORD
-  UPDATE teams SET name = 'RISHU''S TEAM', access_key = 'PASSWORD'
+  -- Also uppercase RISHU's existing team and set key to its code
+  UPDATE teams SET name = 'RISHU''S TEAM', access_key = code
   WHERE upper(name) LIKE '%RISHU%';
 
-  RAISE NOTICE 'Done — all teams ready with access key: PASSWORD';
+  RAISE NOTICE 'Done — all teams ready with access key = their team code';
 END $$;

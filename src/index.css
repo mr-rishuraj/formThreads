@@ -61,11 +61,11 @@ body::before {
 }
 
 /* ── Scrollbar — chunky pixel ── */
-* { scrollbar-width: thin; scrollbar-color: var(--accent-dim) transparent; }
-::-webkit-scrollbar { width: 8px; }
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 0; border: 1px solid var(--border-mid); }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
 ::selection { background: var(--accent-soft); color: #c4bbff; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

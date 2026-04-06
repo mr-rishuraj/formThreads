@@ -45,6 +45,7 @@ const AdminQuestionPanel: React.FC<AdminQuestionPanelProps> = ({
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
+      minHeight: 0,
     }}>
       {/* Header */}
       <div style={{
@@ -64,7 +65,7 @@ const AdminQuestionPanel: React.FC<AdminQuestionPanelProps> = ({
         </span>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120, gap: 6 }}>
             {[0,1,2].map(i => (

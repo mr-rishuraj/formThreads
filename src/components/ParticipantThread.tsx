@@ -219,7 +219,7 @@ const GmailReplyBox: React.FC<{
           padding: '14px 16px',
           fontFamily: 'Roboto, Arial, sans-serif',
           fontSize: 14, color: '#202124',
-          resize: 'none', minHeight: 90, maxHeight: 200,
+          resize: 'none', minHeight: 90, maxHeight: 200, overflowY: 'auto',
           lineHeight: 1.6, background: 'transparent',
           opacity: sending ? 0.5 : 1,
         }}
@@ -342,7 +342,8 @@ const ParticipantThread: React.FC<ParticipantThreadProps> = ({
   if (!question) {
     return (
       <div style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: GMAIL_BG,
       }}>
         <div style={{ textAlign: 'center' }}>
@@ -373,7 +374,8 @@ const ParticipantThread: React.FC<ParticipantThreadProps> = ({
 
   return (
     <div style={{
-      flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0,
+      flex: 1, display: 'flex', flexDirection: 'column',
+      minWidth: 0, minHeight: 0, overflow: 'hidden',
       background: GMAIL_BG, fontFamily: 'Roboto, Arial, sans-serif',
     }}>
 
@@ -406,7 +408,7 @@ const ParticipantThread: React.FC<ParticipantThreadProps> = ({
 
       {/* ── Thread scroll area ── */}
       <div style={{
-        flex: 1, overflowY: 'auto',
+        flex: 1, minHeight: 0, overflowY: 'auto',
         padding: '0 28px 16px',
         display: 'flex', flexDirection: 'column', gap: 8,
       }}>
