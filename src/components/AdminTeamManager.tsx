@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Team, StandaloneQuestion } from '../types';
 import { getAssignedTeamIds } from '../queries/questions';
+import { getAllMessagesForExport } from '../queries/messages';
 
 interface AdminTeamManagerProps {
   teams: Team[];
@@ -30,6 +31,7 @@ const AdminTeamManager: React.FC<AdminTeamManagerProps> = ({
   const [assigningQ, setAssigningQ] = useState<StandaloneQuestion | null>(null);
   const [assignedIds, setAssignedIds] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const copyKey = (key: string, id: string) => {
     navigator.clipboard.writeText(key).then(() => {
@@ -81,6 +83,40 @@ const AdminTeamManager: React.FC<AdminTeamManagerProps> = ({
     setAssigningQ(null);
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const rows = await getAllMessagesForExport();
+      if (rows.length === 0) { alert('No messages to export.'); return; }
+
+      const headers = ['Team Name', 'Team Code', 'Question', 'Sender', 'Message', 'Submitted At'];
+      const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+      const csv = [
+        headers.map(escape).join(','),
+        ...rows.map(r => [
+          escape(r.teamName),
+          escape(r.teamCode),
+          escape(r.questionTitle),
+          escape(r.sender),
+          escape(r.message),
+          escape(r.submittedAt),
+        ].join(',')),
+      ].join('\n');
+
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `sfp-responses-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      alert('Export failed: ' + (e?.message ?? 'Unknown error'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const boxStyle: React.CSSProperties = {
     background: 'var(--bg-elevated)',
     border: '1px solid var(--border-mid)',
@@ -122,12 +158,33 @@ const AdminTeamManager: React.FC<AdminTeamManagerProps> = ({
           <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: 'var(--text-primary)', letterSpacing: '0.05em' }}>
             ADMIN PANEL
           </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="pixel-btn"
+              style={{
+                padding: '4px 12px',
+                fontFamily: "'VT323', monospace", fontSize: 13,
+                background: 'var(--bg-base)',
+                border: '1px solid var(--border-mid)',
+                color: exporting ? 'var(--text-muted)' : 'var(--text-secondary)',
+                cursor: exporting ? 'not-allowed' : 'pointer',
+                letterSpacing: '0.06em',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}
+              onMouseEnter={e => { if (!exporting) e.currentTarget.style.borderColor = 'var(--accent)'; }}
+              onMouseLeave={e => { if (!exporting) e.currentTarget.style.borderColor = 'var(--border-mid)'; }}
+            >
+              {exporting ? '…' : '↓ Export CSV'}
+            </button>
           <button
             onClick={onClose}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1, padding: '2px 6px' }}
             onMouseEnter={e => (e.target as HTMLElement).style.color = 'var(--status-flag)'}
             onMouseLeave={e => (e.target as HTMLElement).style.color = 'var(--text-muted)'}
           >×</button>
+          </div>
         </div>
 
         {/* Tabs */}

@@ -40,6 +40,42 @@ export async function sendMessage(
   if (error) throw error;
 }
 
+export type ExportRow = {
+  teamName: string;
+  teamCode: string;
+  questionTitle: string;
+  sender: string;
+  message: string;
+  submittedAt: string;
+};
+
+export async function getAllMessagesForExport(): Promise<ExportRow[]> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select(`
+      id,
+      sender,
+      content,
+      created_at,
+      teams ( name, code ),
+      questions ( title )
+    `)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row: any) => ({
+    teamName:      row.teams?.name     ?? 'Unknown Team',
+    teamCode:      row.teams?.code     ?? '',
+    questionTitle: row.questions?.title ?? 'Unknown Question',
+    sender:        row.sender === 'admin' ? 'Admin' : row.teams?.name ?? 'Team',
+    message:       row.content ?? '',
+    submittedAt:   row.created_at
+      ? new Date(row.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+      : '',
+  }));
+}
+
 export async function getMessages(
   teamId: string,
   questionId: string,
